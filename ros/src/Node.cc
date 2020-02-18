@@ -77,10 +77,45 @@ void Node::PublishMapPoints (std::vector<ORB_SLAM2::MapPoint*> map_points) {
 
 
 void Node::PublishPositionAsTransform (cv::Mat position) {
-  tf::Transform transform = TransformFromMat (position);
-  static tf::TransformBroadcaster tf_broadcaster;
-  tf_broadcaster.sendTransform(tf::StampedTransform(transform, current_frame_time_, map_frame_id_param_, camera_frame_id_param_));
-}
+
+    tf::Transform current_tf = TransformFromMat (position);
+
+  tf::StampedTransform odom_tf;
+  try{
+      listener_.lookupTransform("odom", "base_footprint", ros::Time(0), odom_tf);
+      listener_.lookupTransform("base_footprint", "torso_front_camera_link", ros::Time(0), camera_pose_);
+  }
+  catch (tf::TransformException ex){
+      ROS_ERROR("%s",ex.what());
+      ros::Duration(1.0).sleep();
+      return;
+  }
+
+  if(first_)
+  {
+      last_odom_pose_ = odom_tf;
+      first_odom_pose_ = odom_tf;
+      last_orb_pose_.setData(current_tf);
+      first_ = false;
+      return;
+  }
+
+//  current_tf = camera_pose_*current_tf;
+
+  tf::Transform delta_orb_tf = last_orb_pose_.inverse()*current_tf;
+  tf::Transform delta_odom_tf = last_odom_pose_.inverse()*odom_tf;
+
+    tf::Transform corrected_tf = delta_orb_tf*delta_odom_tf.inverse();
+//    tf::Transform corrected_tf = current_tf*odom_tf.inverse();
+
+//      tf::Transform corrected_tf = delta_orb_tf.inverse()*delta_odom_tf;
+//      tf::Transform corrected_tf = current_tf.inverse()*odom_tf;
+
+  tf_broadcaster.sendTransform(tf::StampedTransform(first_odom_pose_*camera_pose_,current_frame_time_,"map","orb_map"));
+  tf_broadcaster.sendTransform(tf::StampedTransform(corrected_tf, current_frame_time_, "map", "odom"));
+
+  last_orb_pose_.setData(current_tf);
+  last_odom_pose_.setData(odom_tf);}
 
 void Node::PublishPositionAsPoseStamped (cv::Mat position) {
   tf::Transform grasp_tf = TransformFromMat (position);
@@ -89,6 +124,8 @@ void Node::PublishPositionAsPoseStamped (cv::Mat position) {
   tf::poseStampedTFToMsg (grasp_tf_pose, pose_msg);
   pose_publisher_.publish(pose_msg);
 }
+
+
 
 
 void Node::PublishRenderedImage (cv::Mat image) {
@@ -133,7 +170,6 @@ tf::Transform Node::TransformFromMat (cv::Mat position_mat) {
 
   return tf::Transform (tf_camera_rotation, tf_camera_translation);
 }
-
 
 sensor_msgs::PointCloud2 Node::MapPointsToPointCloud (std::vector<ORB_SLAM2::MapPoint*> map_points) {
   if (map_points.size() == 0) {
@@ -180,7 +216,6 @@ sensor_msgs::PointCloud2 Node::MapPointsToPointCloud (std::vector<ORB_SLAM2::Map
 
   return cloud;
 }
-
 
 void Node::ParamsChangedCallback(orb_slam2_ros::dynamic_reconfigureConfig &config, uint32_t level) {
   orb_slam_->EnableLocalizationOnly (config.localize_only);
