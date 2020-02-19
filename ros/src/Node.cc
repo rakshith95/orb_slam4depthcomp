@@ -36,6 +36,20 @@ Node::Node (ORB_SLAM2::System::eSensor sensor, ros::NodeHandle &node_handle, ima
     pose_publisher_ = node_handle_.advertise<geometry_msgs::PoseStamped> (name_of_node_+"/pose", 1);
   }
 
+  // listen to camera pose
+  while (!got_tf_)
+  {
+    try
+    {
+      listener_.lookupTransform("base_footprint", "torso_front_camera_link", ros::Time(0), camera_pose_);
+    }
+    catch (tf::TransformException ex){
+      ROS_ERROR("%s",ex.what());
+      ros::Duration(1.0).sleep();
+      continue;
+    }
+    got_tf_ = true;
+  }
 }
 
 
@@ -77,45 +91,43 @@ void Node::PublishMapPoints (std::vector<ORB_SLAM2::MapPoint*> map_points) {
 
 
 void Node::PublishPositionAsTransform (cv::Mat position) {
+  if(!got_tf_)
+  {
+    return;
+  }
 
-    tf::Transform current_tf = TransformFromMat (position);
-
+  tf::Transform current_tf = TransformFromMat (position);
   tf::StampedTransform odom_tf;
-  try{
-      listener_.lookupTransform("odom", "base_footprint", ros::Time(0), odom_tf);
-      listener_.lookupTransform("base_footprint", "torso_front_camera_link", ros::Time(0), camera_pose_);
+  try
+  {
+    listener_.lookupTransform("odom", "base_footprint", ros::Time(0), odom_tf);
   }
   catch (tf::TransformException ex){
-      ROS_ERROR("%s",ex.what());
-      ros::Duration(1.0).sleep();
-      return;
+    ROS_ERROR("%s",ex.what());
+    ros::Duration(1.0).sleep();
+    return;
   }
 
   if(first_)
   {
-      last_odom_pose_ = odom_tf;
-      first_odom_pose_ = odom_tf;
-      last_orb_pose_.setData(current_tf);
-      first_ = false;
-      return;
+    last_odom_pose_ = odom_tf;
+    first_odom_pose_ = odom_tf;
+    last_orb_pose_.setData(current_tf);
+    first_ = false;
+    return;
   }
-
-//  current_tf = camera_pose_*current_tf;
 
   tf::Transform delta_orb_tf = last_orb_pose_.inverse()*current_tf;
   tf::Transform delta_odom_tf = last_odom_pose_.inverse()*odom_tf;
 
-    tf::Transform corrected_tf = delta_orb_tf*delta_odom_tf.inverse();
-//    tf::Transform corrected_tf = current_tf*odom_tf.inverse();
-
-//      tf::Transform corrected_tf = delta_orb_tf.inverse()*delta_odom_tf;
-//      tf::Transform corrected_tf = current_tf.inverse()*odom_tf;
+  tf::Transform corrected_tf = delta_orb_tf*delta_odom_tf.inverse();
 
   tf_broadcaster.sendTransform(tf::StampedTransform(first_odom_pose_*camera_pose_,current_frame_time_,"map","orb_map"));
   tf_broadcaster.sendTransform(tf::StampedTransform(corrected_tf, current_frame_time_, "map", "odom"));
 
   last_orb_pose_.setData(current_tf);
-  last_odom_pose_.setData(odom_tf);}
+  last_odom_pose_.setData(odom_tf);
+}
 
 void Node::PublishPositionAsPoseStamped (cv::Mat position) {
   tf::Transform grasp_tf = TransformFromMat (position);

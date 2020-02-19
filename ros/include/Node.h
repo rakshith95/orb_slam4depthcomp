@@ -90,17 +90,19 @@ class Node
     bool publish_pose_param_;
     int min_observations_per_point_;
 
+    // pal stuff
+    bool first_ = true;
+    bool got_tf_ = false;
+
     tf::TransformListener listener_;
     tf::StampedTransform last_odom_pose_;
     tf::StampedTransform last_orb_pose_;
     tf::StampedTransform first_odom_pose_;
     tf::StampedTransform first_orb_pose_;
-
-    bool first_ = true;
-
     tf::StampedTransform camera_pose_;
 
     tf::TransformBroadcaster tf_broadcaster;
+
 };
 
 #endif //ORBSLAM2_ROS_NODE_H_
