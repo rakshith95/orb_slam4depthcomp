@@ -2,8 +2,8 @@
 Changelog for package orb_slam2_ros
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+2.0.0 (2020-02-24)
+------------------
 * Merge branch 'build-fix' into 'master'
   Build fix
   See merge request ros-overlays/orb_slam_2_ros!3
