@@ -2,6 +2,14 @@
 Changelog for package orb_slam2_ros
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* cosmetic
+* set old behavior as default
+* keeping old behavior and parametrizing tf frames
+* publishing custom TFs
+* Contributors: Federico Nardi, Procópio Stein
+
 2.0.0 (2020-02-24)
 ------------------
 * Merge branch 'build-fix' into 'master'
