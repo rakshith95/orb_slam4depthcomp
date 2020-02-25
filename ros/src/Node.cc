@@ -39,20 +39,27 @@ Node::Node (ORB_SLAM2::System::eSensor sensor, ros::NodeHandle &node_handle, ima
   node_handle_.param(name_of_node_ + "/correct_global_frame", correct_global_frame_, false);
   if(correct_global_frame_)
   {
-    node_handle_.param<std::string>(name_of_node_+ "/base_footprint_frame_id", base_footprint_frame_id_, "base_footprint");
-    node_handle_.param<std::string>(name_of_node_+ "/robot_camera_frame_id", robot_camera_frame_id_, "torso_front_camera_link");
-    node_handle_.param<std::string>(name_of_node_+ "/odom_frame_id", odom_frame_id_, "odom");
-    node_handle_.param<std::string>(name_of_node_+ "/corrected_map_frame_id", corrected_map_frame_id_, "map");
+    node_handle_.param<std::string>(name_of_node_+ "/base_footprint_frame_id",
+                                    base_footprint_frame_id_, "base_footprint");
+    node_handle_.param<std::string>(name_of_node_+ "/robot_camera_frame_id",
+                                    robot_camera_frame_id_, "torso_front_camera_link");
+    node_handle_.param<std::string>(name_of_node_+ "/odom_frame_id",
+                                    odom_frame_id_, "odom");
+    node_handle_.param<std::string>(name_of_node_+ "/corrected_map_frame_id",
+                                    corrected_map_frame_id_, "map");
 
     // listen to camera pose
     while (!got_tf_)
     {
       try
       {
-        listener_.lookupTransform(base_footprint_frame_id_, robot_camera_frame_id_, ros::Time(0), camera_pose_);
+        listener_.lookupTransform(base_footprint_frame_id_,
+                                  robot_camera_frame_id_,
+                                  ros::Time(0), camera_pose_);
       }
-      catch (tf::TransformException ex){
-        ROS_ERROR("%s",ex.what());
+      catch (tf::TransformException ex)
+      {
+        ROS_ERROR("%s", ex.what());
         ros::Duration(1.0).sleep();
         continue;
       }
@@ -106,7 +113,9 @@ void Node::PublishPositionAsTransform (cv::Mat position) {
   {
     tf::Transform transform = TransformFromMat (position);
     static tf::TransformBroadcaster tf_broadcaster;
-    tf_broadcaster.sendTransform(tf::StampedTransform(transform, current_frame_time_, map_frame_id_param_, camera_frame_id_param_));
+    tf_broadcaster.sendTransform(
+          tf::StampedTransform(transform, current_frame_time_,
+                               map_frame_id_param_, camera_frame_id_param_));
     return;
   }
 
@@ -120,7 +129,8 @@ void Node::PublishPositionAsTransform (cv::Mat position) {
   tf::StampedTransform odom_tf;
   try
   {
-    listener_.lookupTransform(odom_frame_id_, base_footprint_frame_id_, ros::Time(0), odom_tf);
+    listener_.lookupTransform(odom_frame_id_, base_footprint_frame_id_,
+                              ros::Time(0), odom_tf);
   }
   catch (tf::TransformException ex){
     ROS_ERROR("%s",ex.what());
@@ -142,8 +152,12 @@ void Node::PublishPositionAsTransform (cv::Mat position) {
 
   tf::Transform corrected_tf = delta_orb_tf*delta_odom_tf.inverse();
 
-  tf_broadcaster.sendTransform(tf::StampedTransform(first_odom_pose_*camera_pose_,current_frame_time_,corrected_map_frame_id_,map_frame_id_param_));
-  tf_broadcaster.sendTransform(tf::StampedTransform(corrected_tf, current_frame_time_, corrected_map_frame_id_, odom_frame_id_));
+  tf_broadcaster.sendTransform(
+        tf::StampedTransform(first_odom_pose_ * camera_pose_, current_frame_time_,
+                             corrected_map_frame_id_, map_frame_id_param_));
+  tf_broadcaster.sendTransform(
+        tf::StampedTransform(corrected_tf, current_frame_time_,
+                             corrected_map_frame_id_, odom_frame_id_));
 
   last_orb_pose_.setData(current_tf);
   last_odom_pose_.setData(odom_tf);
