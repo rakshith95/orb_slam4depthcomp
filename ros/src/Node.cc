@@ -36,7 +36,7 @@ Node::Node (ORB_SLAM2::System::eSensor sensor, ros::NodeHandle &node_handle, ima
     pose_publisher_ = node_handle_.advertise<geometry_msgs::PoseStamped> (name_of_node_+"/pose", 1);
   }
 
-  node_handle_.param(name_of_node_ + "/correct_global_frame", correct_global_frame_, true);
+  node_handle_.param(name_of_node_ + "/correct_global_frame", correct_global_frame_, false);
   if(correct_global_frame_)
   {
     node_handle_.param<std::string>(name_of_node_+ "/base_footprint_frame_id", base_footprint_frame_id_, "base_footprint");
