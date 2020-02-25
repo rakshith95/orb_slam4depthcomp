@@ -2,8 +2,8 @@
 Changelog for package orb_slam2_ros
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+2.0.1 (2020-02-25)
+------------------
 * cosmetic
 * set old behavior as default
 * keeping old behavior and parametrizing tf frames
