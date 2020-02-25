@@ -43,7 +43,8 @@
 
 #include "System.h"
 
-
+#include <Eigen/Geometry>
+#include <tf/transform_listener.h>
 
 class Node
 {
@@ -88,6 +89,26 @@ class Node
     bool publish_pointcloud_param_;
     bool publish_pose_param_;
     int min_observations_per_point_;
+
+    // pal stuff
+    bool first_ = true;
+    bool got_tf_ = false;
+
+    tf::TransformListener listener_;
+    tf::StampedTransform last_odom_pose_;
+    tf::StampedTransform last_orb_pose_;
+    tf::StampedTransform first_odom_pose_;
+    tf::StampedTransform first_orb_pose_;
+    tf::StampedTransform camera_pose_;
+
+    tf::TransformBroadcaster tf_broadcaster;
+
+    bool correct_global_frame_;
+
+    std::string base_footprint_frame_id_;
+    std::string robot_camera_frame_id_;
+    std::string odom_frame_id_;
+    std::string corrected_map_frame_id_;
 };
 
 #endif //ORBSLAM2_ROS_NODE_H_

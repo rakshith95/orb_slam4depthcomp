@@ -36,6 +36,36 @@ Node::Node (ORB_SLAM2::System::eSensor sensor, ros::NodeHandle &node_handle, ima
     pose_publisher_ = node_handle_.advertise<geometry_msgs::PoseStamped> (name_of_node_+"/pose", 1);
   }
 
+  node_handle_.param(name_of_node_ + "/correct_global_frame", correct_global_frame_, false);
+  if(correct_global_frame_)
+  {
+    node_handle_.param<std::string>(name_of_node_+ "/base_footprint_frame_id",
+                                    base_footprint_frame_id_, "base_footprint");
+    node_handle_.param<std::string>(name_of_node_+ "/robot_camera_frame_id",
+                                    robot_camera_frame_id_, "torso_front_camera_link");
+    node_handle_.param<std::string>(name_of_node_+ "/odom_frame_id",
+                                    odom_frame_id_, "odom");
+    node_handle_.param<std::string>(name_of_node_+ "/corrected_map_frame_id",
+                                    corrected_map_frame_id_, "map");
+
+    // listen to camera pose
+    while (!got_tf_)
+    {
+      try
+      {
+        listener_.lookupTransform(base_footprint_frame_id_,
+                                  robot_camera_frame_id_,
+                                  ros::Time(0), camera_pose_);
+      }
+      catch (tf::TransformException ex)
+      {
+        ROS_ERROR("%s", ex.what());
+        ros::Duration(1.0).sleep();
+        continue;
+      }
+      got_tf_ = true;
+    }
+  }
 }
 
 
@@ -77,9 +107,60 @@ void Node::PublishMapPoints (std::vector<ORB_SLAM2::MapPoint*> map_points) {
 
 
 void Node::PublishPositionAsTransform (cv::Mat position) {
-  tf::Transform transform = TransformFromMat (position);
-  static tf::TransformBroadcaster tf_broadcaster;
-  tf_broadcaster.sendTransform(tf::StampedTransform(transform, current_frame_time_, map_frame_id_param_, camera_frame_id_param_));
+
+  // old behavior
+  if(!correct_global_frame_)
+  {
+    tf::Transform transform = TransformFromMat (position);
+    static tf::TransformBroadcaster tf_broadcaster;
+    tf_broadcaster.sendTransform(
+          tf::StampedTransform(transform, current_frame_time_,
+                               map_frame_id_param_, camera_frame_id_param_));
+    return;
+  }
+
+  // new behavior
+  if(!got_tf_)
+  {
+    return;
+  }
+
+  tf::Transform current_tf = TransformFromMat (position);
+  tf::StampedTransform odom_tf;
+  try
+  {
+    listener_.lookupTransform(odom_frame_id_, base_footprint_frame_id_,
+                              ros::Time(0), odom_tf);
+  }
+  catch (tf::TransformException ex){
+    ROS_ERROR("%s",ex.what());
+    ros::Duration(1.0).sleep();
+    return;
+  }
+
+  if(first_)
+  {
+    last_odom_pose_ = odom_tf;
+    first_odom_pose_ = odom_tf;
+    last_orb_pose_.setData(current_tf);
+    first_ = false;
+    return;
+  }
+
+  tf::Transform delta_orb_tf = last_orb_pose_.inverse()*current_tf;
+  tf::Transform delta_odom_tf = last_odom_pose_.inverse()*odom_tf;
+
+  tf::Transform corrected_tf = delta_orb_tf*delta_odom_tf.inverse();
+
+  tf_broadcaster.sendTransform(
+        tf::StampedTransform(first_odom_pose_ * camera_pose_, current_frame_time_,
+                             corrected_map_frame_id_, map_frame_id_param_));
+  tf_broadcaster.sendTransform(
+        tf::StampedTransform(corrected_tf, current_frame_time_,
+                             corrected_map_frame_id_, odom_frame_id_));
+
+  last_orb_pose_.setData(current_tf);
+  last_odom_pose_.setData(odom_tf);
 }
 
 void Node::PublishPositionAsPoseStamped (cv::Mat position) {
@@ -89,6 +170,8 @@ void Node::PublishPositionAsPoseStamped (cv::Mat position) {
   tf::poseStampedTFToMsg (grasp_tf_pose, pose_msg);
   pose_publisher_.publish(pose_msg);
 }
+
+
 
 
 void Node::PublishRenderedImage (cv::Mat image) {
@@ -133,7 +216,6 @@ tf::Transform Node::TransformFromMat (cv::Mat position_mat) {
 
   return tf::Transform (tf_camera_rotation, tf_camera_translation);
 }
-
 
 sensor_msgs::PointCloud2 Node::MapPointsToPointCloud (std::vector<ORB_SLAM2::MapPoint*> map_points) {
   if (map_points.size() == 0) {
@@ -180,7 +262,6 @@ sensor_msgs::PointCloud2 Node::MapPointsToPointCloud (std::vector<ORB_SLAM2::Map
 
   return cloud;
 }
-
 
 void Node::ParamsChangedCallback(orb_slam2_ros::dynamic_reconfigureConfig &config, uint32_t level) {
   orb_slam_->EnableLocalizationOnly (config.localize_only);
