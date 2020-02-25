@@ -103,6 +103,12 @@ class Node
 
     tf::TransformBroadcaster tf_broadcaster;
 
+    bool correct_global_frame_;
+
+    std::string base_footprint_frame_id_;
+    std::string robot_camera_frame_id_;
+    std::string odom_frame_id_;
+    std::string corrected_map_frame_id_;
 };
 
 #endif //ORBSLAM2_ROS_NODE_H_
