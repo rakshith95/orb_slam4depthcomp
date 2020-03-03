@@ -52,6 +52,8 @@ class Node
     Node (ORB_SLAM2::System::eSensor sensor, ros::NodeHandle &node_handle, image_transport::ImageTransport &image_transport);
     ~Node ();
 
+    void storeData();
+
   protected:
     void Update ();
     ORB_SLAM2::System* orb_slam_;

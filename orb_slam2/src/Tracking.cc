@@ -202,7 +202,7 @@ cv::Mat Tracking::GrabImageStereo(const cv::Mat &imRectLeft, const cv::Mat &imRe
 cv::Mat Tracking::GrabImageRGBD(const cv::Mat &imRGB,const cv::Mat &imD, const double &timestamp)
 {
     mImGray = imRGB;
-    cv::Mat imDepth = imD;
+    imDepth = imD;
 
     if(mImGray.channels()==3)
     {
@@ -1133,6 +1133,8 @@ void Tracking::CreateNewKeyFrame()
 
     mnLastKeyFrameId = mCurrentFrame.mnId;
     mpLastKeyFrame = pKF;
+
+//    cv::imw
 }
 
 void Tracking::SearchLocalPoints()

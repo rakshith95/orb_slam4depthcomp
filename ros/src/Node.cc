@@ -79,6 +79,19 @@ Node::~Node () {
   delete orb_slam_;
 }
 
+void Node::storeData()
+{
+  std::cerr << "Storing data!!!" << std::endl;
+
+  // Stop all threads
+  orb_slam_->Shutdown();
+
+  // Save camera trajectory
+  orb_slam_->SaveKeyFrameTrajectoryTUM("KeyFrameTrajectory.txt");
+
+  delete orb_slam_;
+}
+
 
 void Node::Update () {
   cv::Mat position = orb_slam_->GetCurrentPosition();

@@ -20,6 +20,8 @@ int main(int argc, char **argv)
 
     ros::shutdown();
 
+    node.storeData();
+
     return 0;
 }
 
