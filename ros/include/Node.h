@@ -111,6 +111,8 @@ class Node
     std::string robot_camera_frame_id_;
     std::string odom_frame_id_;
     std::string corrected_map_frame_id_;
+
+    std::string storage_path_;
 };
 
 #endif //ORBSLAM2_ROS_NODE_H_

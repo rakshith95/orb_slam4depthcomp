@@ -1,4 +1,6 @@
 <launch>
+  <arg name="storage_path"           default="~"/>
+
   <node name="orb_slam2_rgbd" pkg="orb_slam2_ros"
       type="orb_slam2_ros_rgbd" output="screen">
 
@@ -9,6 +11,7 @@
        <param name="publish_pose" type="bool" value="false" />
        <param name="localize_only" type="bool" value="false" />
        <param name="reset_map" type="bool" value="false" />
+       <param name="storage_path" type="string" value="$(arg storage_path)"/>
 
        <!-- static parameters -->
        <param name="load_map" type="bool" value="false" />

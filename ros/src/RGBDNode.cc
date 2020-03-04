@@ -5,6 +5,7 @@ int main(int argc, char **argv)
     ros::init(argc, argv, "RGBD");
     ros::start();
 
+
     if(argc > 1) {
         ROS_WARN ("Arguments supplied via command line are neglected.");
     }
