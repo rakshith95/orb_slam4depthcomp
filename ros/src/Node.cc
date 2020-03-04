@@ -158,18 +158,17 @@ void Node::PublishPositionAsTransform(cv::Mat position)
   if (first_)
   {
     last_odom_pose_ = odom_tf;
-    first_odom_pose_ = odom_tf;
     last_orb_pose_.setData(current_tf);
     first_ = false;
     return;
   }
 
-  tf::Transform delta_orb_tf = last_orb_pose_.inverse() * current_tf;
-  tf::Transform delta_odom_tf = last_odom_pose_.inverse() * odom_tf;
+  // this is ugly :(
+  tf::Transform tf1 = camera_pose_.inverse()*odom_tf.inverse();
+  tf::Transform tf2 = current_tf * tf1;
+  tf::Transform corrected_tf = camera_pose_ * tf2;
 
-  tf::Transform corrected_tf = delta_orb_tf * delta_odom_tf.inverse();
-
-  tf_broadcaster.sendTransform(tf::StampedTransform(first_odom_pose_ * camera_pose_, current_frame_time_,
+  tf_broadcaster.sendTransform(tf::StampedTransform(camera_pose_, current_frame_time_,
                                                     corrected_map_frame_id_, map_frame_id_param_));
   tf_broadcaster.sendTransform(
       tf::StampedTransform(corrected_tf, current_frame_time_, corrected_map_frame_id_, odom_frame_id_));

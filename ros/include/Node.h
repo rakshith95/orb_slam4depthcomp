@@ -99,8 +99,6 @@ class Node
     tf::TransformListener listener_;
     tf::StampedTransform last_odom_pose_;
     tf::StampedTransform last_orb_pose_;
-    tf::StampedTransform first_odom_pose_;
-    tf::StampedTransform first_orb_pose_;
     tf::StampedTransform camera_pose_;
 
     tf::TransformBroadcaster tf_broadcaster;
