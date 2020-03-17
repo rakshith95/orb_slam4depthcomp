@@ -27,6 +27,7 @@ sensor_msgs
 dynamic_reconfigure
 message_generation
 )
+disable_pal_flags()
 
 find_package(OpenCV 3.0 QUIET)
 if(NOT OpenCV_FOUND)
