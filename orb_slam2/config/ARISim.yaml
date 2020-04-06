@@ -1,8 +1,8 @@
 %YAML:1.0
 
 # Camera calibration parameters (OpenCV)
-Camera.fx: 632.7927
-Camera.fy: 626.8605
+Camera.fx: 462.1379699707031
+Camera.fy: 462.1379699707031
 Camera.cx: 320.0
 Camera.cy: 240.0
 

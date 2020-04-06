@@ -1,5 +1,6 @@
-
 <launch>
+  <arg name="storage_path"           default="~"/>
+  
   <node name="orb_slam2_rgbd" pkg="orb_slam2_ros"
       type="orb_slam2_ros_rgbd" output="screen">
 
@@ -10,6 +11,7 @@
        <param name="publish_pose" type="bool" value="true" />
        <param name="localize_only" type="bool" value="false" />
        <param name="reset_map" type="bool" value="false" />
+       <param name="storage_path" type="string" value="$(arg storage_path)"/>
 
        <!-- static parameters -->
        <param name="load_map" type="bool" value="false" />
@@ -17,9 +19,11 @@
        <param name="settings_file" type="string" value="$(find orb_slam2_ros)/orb_slam2/config/ARISim.yaml" />
        <param name="voc_file" type="string" value="$(find orb_slam2_ros)/orb_slam2/Vocabulary/ORBvoc.txt" />
 
-       <param name="pointcloud_frame_id" type="string" value="map" />
-       <param name="camera_frame_id" type="string" value="torso_front_camera_link" />
+       <param name="pointcloud_frame_id" type="string" value="orb_map" />
+       <param name="camera_frame_id" type="string" value="camera_link" />
        <param name="min_num_kf_in_map" type="int" value="5" />
+       
+       <param name="correct_global_frame" type="bool" value="true" />
   </node>
 </launch>
 
