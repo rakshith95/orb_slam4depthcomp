@@ -309,5 +309,7 @@ bool Node::SaveMapSrv(orb_slam2_ros::SaveMap::Request& req, orb_slam2_ros::SaveM
     ROS_ERROR("Map could not be saved.");
   }
 
+  orb_slam_->SaveKeyFrameTrajectoryTUM("KeyFrameTrajectory.txt");
+
   return res.success;
 }
