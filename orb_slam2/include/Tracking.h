@@ -71,6 +71,7 @@ public:
     // Use this function if you have deactivated local mapping and you only want to localize the camera.
     void InformOnlyTracking(const bool &flag);
 
+    const std::vector<std::pair<double,std::string>>& dataset() const {return dataset_;}
 
 public:
 
@@ -212,7 +213,7 @@ protected:
     //Color order (true RGB, false BGR, ignored if grayscale)
     bool mbRGB;
 
-    std::ofstream out_;
+    std::vector<std::pair<double,std::string>> dataset_;
 
     list<MapPoint*> mlpTemporalPoints;
 };

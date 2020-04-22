@@ -155,9 +155,6 @@ Tracking::Tracking(System* pSys, ORBVocabulary* pVoc, FrameDrawer* pFrameDrawer,
     else
       mDepthMapFactor = 1.0f / mDepthMapFactor;
   }
-
-  out_.open("dataset.txt");
-  std::cout.precision(6);
 }
 
 void Tracking::SetLocalMapper(LocalMapping* pLocalMapper)
@@ -1162,7 +1159,7 @@ void Tracking::CreateNewKeyFrame()
   ss_dpt << "dpt_" << mnLastKeyFrameId << ".pgm";
   cv::imwrite(ss_dpt.str(), imDepthRaw);
 
-  out_ << std::fixed << mCurrentFrame.mTimeStamp << " " << ss_dpt.str() << std::endl;
+  dataset_.push_back(std::make_pair(mCurrentFrame.mTimeStamp,ss_dpt.str()));
 }
 
 void Tracking::SearchLocalPoints()
