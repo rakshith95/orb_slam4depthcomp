@@ -168,10 +168,12 @@ void Node::PublishPositionAsTransform(cv::Mat position)
   tf::Transform tf2 = current_tf * tf1;
   tf::Transform corrected_tf = camera_pose_ * tf2;
 
-  tf_broadcaster.sendTransform(tf::StampedTransform(camera_pose_, current_frame_time_,
+  ros::Time shifted_time = current_frame_time_ + ros::Duration(0.4);
+
+  tf_broadcaster.sendTransform(tf::StampedTransform(camera_pose_, shifted_time,
                                                     corrected_map_frame_id_, map_frame_id_param_));
   tf_broadcaster.sendTransform(
-      tf::StampedTransform(corrected_tf, current_frame_time_, corrected_map_frame_id_, odom_frame_id_));
+      tf::StampedTransform(corrected_tf, shifted_time, corrected_map_frame_id_, odom_frame_id_));
 
   last_orb_pose_.setData(current_tf);
   last_odom_pose_.setData(odom_tf);
