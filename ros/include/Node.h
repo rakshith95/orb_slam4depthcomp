@@ -46,6 +46,8 @@
 #include <Eigen/Geometry>
 #include <tf/transform_listener.h>
 
+#include <angles/angles.h>
+
 class Node
 {
   public:
@@ -98,8 +100,8 @@ class Node
 
     tf::TransformListener listener_;
     tf::StampedTransform last_odom_pose_;
-    tf::StampedTransform last_orb_pose_;
     tf::StampedTransform camera_pose_;
+    tf::Transform last_corrected_pose_;
 
     tf::TransformBroadcaster tf_broadcaster;
 
@@ -111,6 +113,19 @@ class Node
     std::string corrected_map_frame_id_;
 
     std::string storage_path_;
+
+    double minimum_travel_distance_;
+    double minimum_travel_heading_;
+
+    double transform_tolerance_;
+
+    bool hasMovedEnough(const tf::Transform& odom_tf)
+    {
+      double travel_distance = (odom_tf.getOrigin() - last_odom_pose_.getOrigin()).length();
+      double travel_heading = angles::shortest_angular_distance(tf::getYaw(odom_tf.getRotation()),
+                                                                tf::getYaw(last_odom_pose_.getRotation()));
+      return (travel_distance > minimum_travel_distance_ || travel_heading > minimum_travel_heading_);
+    }
 };
 
 #endif //ORBSLAM2_ROS_NODE_H_

@@ -54,6 +54,10 @@ Node::Node(ORB_SLAM2::System::eSensor sensor, ros::NodeHandle& node_handle,
     node_handle_.param<std::string>(name_of_node_ + "/odom_frame_id", odom_frame_id_, "odom");
     node_handle_.param<std::string>(name_of_node_ + "/corrected_map_frame_id", corrected_map_frame_id_, "map");
 
+    node_handle_.param(name_of_node_ + "/minimum_travel_distance", minimum_travel_distance_,0.2);
+    node_handle_.param(name_of_node_ + "/minimum_travel_heading", minimum_travel_heading_, 0.017);
+    node_handle_.param(name_of_node_ + "/transform_tolerance", transform_tolerance_, 0.27);
+
     // listen to camera pose
     while (!got_tf_)
     {
@@ -142,7 +146,6 @@ void Node::PublishPositionAsTransform(cv::Mat position)
     return;
   }
 
-  tf::Transform current_tf = TransformFromMat(position);
   tf::StampedTransform odom_tf;
   try
   {
@@ -155,27 +158,42 @@ void Node::PublishPositionAsTransform(cv::Mat position)
     return;
   }
 
-  if (first_)
+  ros::Time shifted_time = current_frame_time_ + ros::Duration(transform_tolerance_);
+
+  if (!first_ && !hasMovedEnough(odom_tf))
   {
-    last_odom_pose_ = odom_tf;
-    last_orb_pose_.setData(current_tf);
-    first_ = false;
+    tf_broadcaster.sendTransform(tf::StampedTransform(
+        camera_pose_, shifted_time, corrected_map_frame_id_, map_frame_id_param_));
+
+    tf_broadcaster.sendTransform(tf::StampedTransform(
+        last_corrected_pose_, shifted_time, corrected_map_frame_id_, odom_frame_id_));
     return;
   }
 
-  // this is ugly :(
-  tf::Transform tf1 = camera_pose_.inverse()*odom_tf.inverse();
+  // update corrected tf
+  tf::Transform current_tf = TransformFromMat(position);
+  tf::Transform tf1 = camera_pose_.inverse() * odom_tf.inverse();
   tf::Transform tf2 = current_tf * tf1;
   tf::Transform corrected_tf = camera_pose_ * tf2;
 
-  ros::Time shifted_time = current_frame_time_ + ros::Duration(0.4);
+  // extract only 2d tf
+  tf::Transform only_2d_tf;
+  only_2d_tf.setIdentity();
+  only_2d_tf.setOrigin(
+      tf::Vector3(corrected_tf.getOrigin().getX(), corrected_tf.getOrigin().getY(), 0));
+  tf::Quaternion q;
+  q.setEuler(0, 0, tf::getYaw(corrected_tf.getRotation()));
+  only_2d_tf.setRotation(q);
 
-  tf_broadcaster.sendTransform(tf::StampedTransform(camera_pose_, shifted_time,
-                                                    corrected_map_frame_id_, map_frame_id_param_));
-  tf_broadcaster.sendTransform(
-      tf::StampedTransform(corrected_tf, shifted_time, corrected_map_frame_id_, odom_frame_id_));
+  last_corrected_pose_ = only_2d_tf;
 
-  last_orb_pose_.setData(current_tf);
+  tf_broadcaster.sendTransform(tf::StampedTransform(
+      camera_pose_, shifted_time, corrected_map_frame_id_, map_frame_id_param_));
+
+  tf_broadcaster.sendTransform(tf::StampedTransform(
+      only_2d_tf, shifted_time, corrected_map_frame_id_, odom_frame_id_));
+
+  first_ = false;
   last_odom_pose_.setData(odom_tf);
 }
 

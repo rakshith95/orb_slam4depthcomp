@@ -26,6 +26,7 @@ tf
 sensor_msgs
 dynamic_reconfigure
 message_generation
+angles
 )
 disable_pal_flags()
 
