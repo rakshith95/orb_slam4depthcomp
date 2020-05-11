@@ -41,7 +41,7 @@ Node::Node(ORB_SLAM2::System::eSensor sensor, ros::NodeHandle& node_handle,
   // Enable publishing camera's pose as PoseStamped message
   if (publish_pose_param_)
   {
-    pose_publisher_ = node_handle_.advertise<geometry_msgs::PoseStamped>(name_of_node_ + "/pose", 1);
+    pose_publisher_ = node_handle_.advertise<geometry_msgs::PoseWithCovarianceStamped>(name_of_node_ + "/pose", 1);
   }
 
   node_handle_.param(name_of_node_ + "/correct_global_frame", correct_global_frame_, false);
@@ -201,8 +201,13 @@ void Node::PublishPositionAsPoseStamped(cv::Mat position)
 {
   tf::Transform grasp_tf = TransformFromMat(position);
   tf::Stamped<tf::Pose> grasp_tf_pose(grasp_tf, current_frame_time_, map_frame_id_param_);
-  geometry_msgs::PoseStamped pose_msg;
-  tf::poseStampedTFToMsg(grasp_tf_pose, pose_msg);
+  //  geometry_msgs::PoseStamped pose_msg;
+//  tf::poseStampedTFToMsg(grasp_tf_pose, pose_msg.pose);
+  geometry_msgs::PoseWithCovarianceStamped pose_msg;
+  pose_msg.header.frame_id = map_frame_id_param_;
+  pose_msg.header.stamp = current_frame_time_;
+  tf::poseTFToMsg(grasp_tf,pose_msg.pose.pose);
+
   pose_publisher_.publish(pose_msg);
 }
 
