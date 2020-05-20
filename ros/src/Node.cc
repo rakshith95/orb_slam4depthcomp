@@ -74,6 +74,8 @@ Node::Node(ORB_SLAM2::System::eSensor sensor, ros::NodeHandle& node_handle,
       got_tf_ = true;
     }
   }
+
+  ROS_INFO_STREAM("Started orb_slam2_ros node!!!");
 }
 
 Node::~Node()
@@ -103,15 +105,16 @@ void Node::storeData()
 void Node::Update()
 {
   cv::Mat position = orb_slam_->GetCurrentPosition();
-
-  if (!position.empty())
+  if(position.empty())
   {
-    PublishPositionAsTransform(position);
+    position = cv::Mat::eye(4, 4, CV_32F);
+  }
 
-    if (publish_pose_param_)
-    {
-      PublishPositionAsPoseStamped(position);
-    }
+  PublishPositionAsTransform(position);
+
+  if (publish_pose_param_)
+  {
+    PublishPositionAsPoseStamped(position);
   }
 
   PublishRenderedImage(orb_slam_->DrawCurrentFrame());
@@ -143,6 +146,7 @@ void Node::PublishPositionAsTransform(cv::Mat position)
   // new behavior
   if (!got_tf_)
   {
+    ROS_WARN_STREAM("Still waiting for base_link->camera transform!!!");
     return;
   }
 
