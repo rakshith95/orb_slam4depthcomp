@@ -17,17 +17,17 @@ ENDIF()
 LIST(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/orb_slam2/cmake_modules)
 
 find_package (catkin REQUIRED COMPONENTS
-roscpp
-rospy
-std_msgs
-cv_bridge
-image_transport
-tf
-sensor_msgs
-dynamic_reconfigure
-message_generation
+  roscpp
+  rospy
+  std_msgs
+  cv_bridge
+  image_transport
+  tf
+  sensor_msgs
+  dynamic_reconfigure
+  message_generation
+  angles
 )
-
 disable_pal_flags()
 
 find_package(OpenCV 3.0 QUIET)
@@ -52,36 +52,34 @@ endif()
 
 set (DYNAMIC_RECONFIGURE_PATH ros/config/dynamic_reconfigure.cfg)
 execute_process(COMMAND chmod a+x ${DYNAMIC_RECONFIGURE_PATH}
-        WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
-        RESULT_VARIABLE cmd_result
-        OUTPUT_VARIABLE cmd_ver)
+  WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
+  RESULT_VARIABLE cmd_result
+  OUTPUT_VARIABLE cmd_ver)
 message(STATUS "Chmod a+x the dynamic_reconfigure file")
 
-generate_dynamic_reconfigure_options(
-        ${DYNAMIC_RECONFIGURE_PATH}
-)
+generate_dynamic_reconfigure_options(${DYNAMIC_RECONFIGURE_PATH})
 
 set(LIBS_ORBSLAM
-${OpenCV_LIBS}
-${EIGEN3_LIBS}
-${PROJECT_SOURCE_DIR}/orb_slam2/Thirdparty/DBoW2/lib/libDBoW2.so
-${PROJECT_SOURCE_DIR}/orb_slam2/Thirdparty/g2o/lib/libg2o.so
+  ${OpenCV_LIBS}
+  ${EIGEN3_LIBS}
+  ${PROJECT_SOURCE_DIR}/orb_slam2/Thirdparty/DBoW2/lib/libDBoW2.so
+  ${PROJECT_SOURCE_DIR}/orb_slam2/Thirdparty/g2o/lib/libg2o.so
 )
 
 set(LIBS_ROS
-${PROJECT_SOURCE_DIR}/orb_slam2/lib/lib${PROJECT_NAME}.so
-${OpenCV_LIBS}
-${catkin_LIBRARIES}
+  ${PROJECT_SOURCE_DIR}/orb_slam2/lib/lib${PROJECT_NAME}.so
+  ${OpenCV_LIBS}
+  ${catkin_LIBRARIES}
 )
 
 add_service_files(
-        FILES
-        SaveMap.srv
+  FILES
+  SaveMap.srv
 )
 
 generate_messages(
-        DEPENDENCIES
-        std_msgs
+  DEPENDENCIES
+  std_msgs
 )
 
 catkin_package (
@@ -90,12 +88,12 @@ catkin_package (
 )
 
 include_directories(
-SYSTEM
-${PROJECT_SOURCE_DIR}/orb_slam2
-${PROJECT_SOURCE_DIR}/orb_slam2/include
-${PROJECT_SOURCE_DIR}/ros/include
-${EIGEN3_INCLUDE_DIR}
-${catkin_INCLUDE_DIRS}
+  SYSTEM
+  ${PROJECT_SOURCE_DIR}/orb_slam2
+  ${PROJECT_SOURCE_DIR}/orb_slam2/include
+  ${PROJECT_SOURCE_DIR}/ros/include
+  ${EIGEN3_INCLUDE_DIR}
+  ${catkin_INCLUDE_DIRS}
 )
 
 include(${PROJECT_SOURCE_DIR}/orb_slam2/Thirdparty/DBoW2/CMakeLists.txt)
@@ -104,29 +102,27 @@ include(${PROJECT_SOURCE_DIR}/orb_slam2/Thirdparty/g2o/CMakeLists.txt)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/orb_slam2/lib)
 
 add_library(${PROJECT_NAME} SHARED
-orb_slam2/src/System.cc
-orb_slam2/src/Tracking.cc
-orb_slam2/src/LocalMapping.cc
-orb_slam2/src/LoopClosing.cc
-orb_slam2/src/ORBextractor.cc
-orb_slam2/src/ORBmatcher.cc
-orb_slam2/src/FrameDrawer.cc
-orb_slam2/src/Converter.cc
-orb_slam2/src/MapPoint.cc
-orb_slam2/src/KeyFrame.cc
-orb_slam2/src/Map.cc
-orb_slam2/src/Optimizer.cc
-orb_slam2/src/PnPsolver.cc
-orb_slam2/src/Frame.cc
-orb_slam2/src/KeyFrameDatabase.cc
-orb_slam2/src/Sim3Solver.cc
-orb_slam2/src/Initializer.cc
+  orb_slam2/src/System.cc
+  orb_slam2/src/Tracking.cc
+  orb_slam2/src/LocalMapping.cc
+  orb_slam2/src/LoopClosing.cc
+  orb_slam2/src/ORBextractor.cc
+  orb_slam2/src/ORBmatcher.cc
+  orb_slam2/src/FrameDrawer.cc
+  orb_slam2/src/Converter.cc
+  orb_slam2/src/MapPoint.cc
+  orb_slam2/src/KeyFrame.cc
+  orb_slam2/src/Map.cc
+  orb_slam2/src/Optimizer.cc
+  orb_slam2/src/PnPsolver.cc
+  orb_slam2/src/Frame.cc
+  orb_slam2/src/KeyFrameDatabase.cc
+  orb_slam2/src/Sim3Solver.cc
+  orb_slam2/src/Initializer.cc
 )
 add_dependencies (${PROJECT_NAME} g2o DBoW2)
 
-target_link_libraries(${PROJECT_NAME}
-${LIBS_ORBSLAM}
-)
+target_link_libraries(${PROJECT_NAME} ${LIBS_ORBSLAM})
 
 # map serialization addition - library boost serialization 
 message(STATUS "Compile With map save/load function")
@@ -137,59 +133,36 @@ endif()
 target_link_libraries(${PROJECT_NAME} ${BOOST_SERIALIZATION})
 
 add_executable (${PROJECT_NAME}_mono
-ros/src/MonoNode.cc
-ros/src/Node.cc
+  ros/src/MonoNode.cc
+  ros/src/Node.cc
 )
 add_dependencies (${PROJECT_NAME}_mono ${PROJECT_NAME} ${PROJECT_NAME}_gencfg)
 
-target_link_libraries(${PROJECT_NAME}_mono
-${LIBS_ROS}
-)
+target_link_libraries(${PROJECT_NAME}_mono ${LIBS_ROS})
 
 add_executable (${PROJECT_NAME}_stereo
-ros/src/StereoNode.cc
-ros/src/Node.cc
+  ros/src/StereoNode.cc
+  ros/src/Node.cc
 )
 add_dependencies (${PROJECT_NAME}_stereo ${PROJECT_NAME} ${PROJECT_NAME}_gencfg)
 
-target_link_libraries(${PROJECT_NAME}_stereo
-${LIBS_ROS}
-)
+target_link_libraries(${PROJECT_NAME}_stereo ${LIBS_ROS})
 
 add_executable (${PROJECT_NAME}_rgbd
-ros/src/RGBDNode.cc
-ros/src/Node.cc
+  ros/src/RGBDNode.cc
+  ros/src/Node.cc
 )
 add_dependencies (${PROJECT_NAME}_rgbd ${PROJECT_NAME} ${PROJECT_NAME}_gencfg)
 
-target_link_libraries(${PROJECT_NAME}_rgbd
-${LIBS_ROS}
-)
+target_link_libraries(${PROJECT_NAME}_rgbd ${LIBS_ROS})
 
-install(TARGETS ${PROJECT_NAME}_mono ${PROJECT_NAME}_stereo ${PROJECT_NAME}_rgbd
+install(TARGETS ${PROJECT_NAME}_mono ${PROJECT_NAME}_stereo ${PROJECT_NAME}_rgbd ${PROJECT_NAME} DBoW2 g2o
   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 
-install(TARGETS ${PROJECT_NAME} DBoW2 g2o
-  ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
-)
-
-install(DIRECTORY ros/launch/
-  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/ros/launch
-)
-
-install(DIRECTORY ros/config/
-        DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/ros/config
-)
-
-install(DIRECTORY orb_slam2/config/
-  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/orb_slam2/config
-)
-
-install(DIRECTORY orb_slam2/Vocabulary/
-  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/orb_slam2/Vocabulary
-)
+foreach(dir ros/launch/ ros/config/ orb_slam2/config/ orb_slam2/Vocabulary/)
+    install(DIRECTORY ${dir}/
+        DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/${dir})
+endforeach()

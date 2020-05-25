@@ -40,17 +40,22 @@
 #include <sensor_msgs/image_encodings.h>
 #include <sensor_msgs/PointCloud2.h>
 #include <geometry_msgs/PoseStamped.h>
+#include <geometry_msgs/PoseWithCovarianceStamped.h>
 
 #include "System.h"
 
 #include <Eigen/Geometry>
 #include <tf/transform_listener.h>
 
+#include <angles/angles.h>
+
 class Node
 {
   public:
     Node (ORB_SLAM2::System::eSensor sensor, ros::NodeHandle &node_handle, image_transport::ImageTransport &image_transport);
     ~Node ();
+
+    void storeData();
 
   protected:
     void Update ();
@@ -96,10 +101,8 @@ class Node
 
     tf::TransformListener listener_;
     tf::StampedTransform last_odom_pose_;
-    tf::StampedTransform last_orb_pose_;
-    tf::StampedTransform first_odom_pose_;
-    tf::StampedTransform first_orb_pose_;
     tf::StampedTransform camera_pose_;
+    tf::Transform last_corrected_pose_;
 
     tf::TransformBroadcaster tf_broadcaster;
 
@@ -109,6 +112,21 @@ class Node
     std::string robot_camera_frame_id_;
     std::string odom_frame_id_;
     std::string corrected_map_frame_id_;
+
+    std::string storage_path_;
+
+    double minimum_travel_distance_;
+    double minimum_travel_heading_;
+
+    double transform_tolerance_;
+
+    bool hasMovedEnough(const tf::Transform& odom_tf)
+    {
+      double travel_distance = (odom_tf.getOrigin() - last_odom_pose_.getOrigin()).length();
+      double travel_heading = angles::shortest_angular_distance(tf::getYaw(odom_tf.getRotation()),
+                                                                tf::getYaw(last_odom_pose_.getRotation()));
+      return (travel_distance > minimum_travel_distance_ || travel_heading > minimum_travel_heading_);
+    }
 };
 
 #endif //ORBSLAM2_ROS_NODE_H_
