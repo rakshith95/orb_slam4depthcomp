@@ -2,6 +2,36 @@
 Changelog for package orb_slam2_ros
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Merge branch 'dev' into 'dubnium-devel'
+  Dev
+  See merge request ros-overlays/orb_slam_2_ros!7
+* code style fixes
+* make the repo publishable
+* cosmetics
+* publishing identity when empty position
+* publishing orb pose with covariance
+* fixed jiggling due to TF
+* publishing tf in the future
+* avoiding to kill node in order to store keyframe trajectory
+* store dataset in vector of pairs
+* uupdated launches and configs for integration in pal_navigation_sm
+* minor fixes in launch file
+* fixes to launch and config files for ari simulation
+* Merge branch 'depth-registered-orb' into 'dev'
+  Depth registered orb
+  See merge request ros-overlays/orb_slam_2_ros!6
+* Update camera params for simulation as well as topics
+* Register to topic depth_registered
+* pushing dynreconf file
+* fixes for ARI simulation
+* fixed tf correction
+* .gitignore fix
+* better dataset storing
+* trying to store data more efficiently
+* Contributors: Federico Nardi, Sara Cooper, federiconardi, procopiostein
+
 2.0.1 (2020-02-25)
 ------------------
 * cosmetic
