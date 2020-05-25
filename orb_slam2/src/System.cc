@@ -407,16 +407,16 @@ void System::SaveKeyFrameTrajectoryTUM(const string &filename)
     f.close();
     cout << endl << "trajectory saved!" << endl;
 
-    ofstream d;
-    d.open("dataset.txt");
-    d << std::fixed;
+    ofstream out;
+    out.open("dataset.txt");
+    out << std::fixed;
 
     const std::vector<std::pair<double, std::string>> &dataset = mpTracker->dataset();
     for (size_t i = 0; i < dataset.size(); ++i)
     {
-      d << dataset[i].first << " " << dataset[i].second << std::endl;
+      out << dataset[i].first << " " << dataset[i].second << std::endl;
     }
-    d.close();
+    out.close();
     cout << endl << "dataset saved!" << endl;
 
 }
