@@ -25,12 +25,17 @@ int main(int argc, char **argv)
 }
 
 
-StereoNode::StereoNode (const ORB_SLAM2::System::eSensor sensor, ros::NodeHandle &node_handle, image_transport::ImageTransport &image_transport) : Node (sensor, node_handle, image_transport) {
+StereoNode::StereoNode (const ORB_SLAM2::System::eSensor sensor,
+                        ros::NodeHandle &node_handle,
+                        image_transport::ImageTransport &image_transport)
+  : Node (sensor, node_handle, image_transport) {
     left_sub_ = new message_filters::Subscriber<sensor_msgs::Image> (node_handle, "image_left/image_color_rect", 1);
     right_sub_ = new message_filters::Subscriber<sensor_msgs::Image> (node_handle, "image_right/image_color_rect", 1);
 
     sync_ = new message_filters::Synchronizer<sync_pol> (sync_pol(10), *left_sub_, *right_sub_);
     sync_->registerCallback(boost::bind(&StereoNode::ImageCallback, this, _1, _2));
+
+    dpt_sub_ = image_transport.subscribe("depth/image_raw",1,&StereoNode::depthImageCallback,this);
 }
 
 
@@ -63,4 +68,9 @@ void StereoNode::ImageCallback (const sensor_msgs::ImageConstPtr& msgLeft, const
   orb_slam_->TrackStereo(cv_ptrLeft->image,cv_ptrRight->image,cv_ptrLeft->header.stamp.toSec());
 
   Update ();
+}
+
+void StereoNode::depthImageCallback(const sensor_msgs::ImageConstPtr &dpt_msg)
+{
+
 }
