@@ -86,4 +86,20 @@ void StereoNode::ImageCallback(const sensor_msgs::ImageConstPtr& msgLeft,
 
 void StereoNode::depthImageCallback(const sensor_msgs::ImageConstPtr& dpt_msg)
 {
+  cv_bridge::CvImageConstPtr cv_ptr_dpt;
+  try
+  {
+    cv_ptr_dpt = cv_bridge::toCvShare(dpt_msg);
+  }
+  catch (cv_bridge::Exception& e)
+  {
+    ROS_ERROR("cv_bridge exception: %s", e.what());
+    return;
+  }
+
+  std::stringstream ss_dpt;
+  ss_dpt << "dpt_" << dpt_msg->header.seq << ".pgm";
+  cv::imwrite(ss_dpt.str(), cv_ptr_dpt->image);
+
+  dpt_dataset_.push_back(std::make_pair(dpt_msg->header.stamp.toSec(), ss_dpt.str()));
 }

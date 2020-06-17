@@ -63,6 +63,8 @@ class Node
 
     ros::Time current_frame_time_;
 
+    std::vector<std::pair<double, std::string>> dpt_dataset_;
+
   private:
     void PublishMapPoints (std::vector<ORB_SLAM2::MapPoint*> map_points);
     void PublishPositionAsTransform (cv::Mat position);

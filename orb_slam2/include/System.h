@@ -129,6 +129,8 @@ public:
 
     std::vector<MapPoint*> GetAllMapPoints();
 
+    const eSensor& sensor() const {return mSensor;}
+
 private:
     bool SetCallStackSize (const rlim_t kNewStackSize);
 
