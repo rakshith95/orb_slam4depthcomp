@@ -63,6 +63,16 @@ class Node
 
     ros::Time current_frame_time_;
 
+    std::string map_frame_id_param_;
+    std::string camera_frame_id_param_;
+    std::string map_file_name_param_;
+    std::string voc_file_name_param_;
+    std::string settings_file_name_param_;
+    bool load_map_param_;
+    bool publish_pointcloud_param_;
+    bool publish_pose_param_;
+    int min_observations_per_point_;
+
     std::vector<std::pair<double, std::string>> dpt_dataset_;
 
   private:
@@ -87,15 +97,6 @@ class Node
     std::string name_of_node_;
     ros::NodeHandle node_handle_;
 
-    std::string map_frame_id_param_;
-    std::string camera_frame_id_param_;
-    std::string map_file_name_param_;
-    std::string voc_file_name_param_;
-    std::string settings_file_name_param_;
-    bool load_map_param_;
-    bool publish_pointcloud_param_;
-    bool publish_pose_param_;
-    int min_observations_per_point_;
 
     // pal stuff
     bool first_ = true;

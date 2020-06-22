@@ -34,12 +34,12 @@ StereoNode::StereoNode(const ORB_SLAM2::System::eSensor sensor, ros::NodeHandle&
       node_handle, "image_left/image_color_rect", 1);
   right_sub_ = new message_filters::Subscriber<sensor_msgs::Image>(
       node_handle, "image_right/image_color_rect", 1);
+  depth_sub_ =
+      new message_filters::Subscriber<sensor_msgs::Image>(node_handle, "depth/image_raw", 1);
 
-  sync_ = new message_filters::Synchronizer<sync_pol>(sync_pol(10), *left_sub_, *right_sub_);
-  sync_->registerCallback(boost::bind(&StereoNode::ImageCallback, this, _1, _2));
-
-  dpt_sub_ =
-      image_transport.subscribe("depth/image_raw", 1, &StereoNode::depthImageCallback, this);
+  sync_ = new message_filters::Synchronizer<sync_pol>(sync_pol(10), *left_sub_,
+                                                      *right_sub_, *depth_sub_);
+  sync_->registerCallback(boost::bind(&StereoNode::ImageCallback, this, _1, _2, _3));
 }
 
 
@@ -52,7 +52,8 @@ StereoNode::~StereoNode()
 
 
 void StereoNode::ImageCallback(const sensor_msgs::ImageConstPtr& msgLeft,
-                               const sensor_msgs::ImageConstPtr& msgRight)
+                               const sensor_msgs::ImageConstPtr& msgRight,
+                               const sensor_msgs::ImageConstPtr& msgDetph)
 {
   cv_bridge::CvImageConstPtr cv_ptrLeft;
   try
@@ -82,24 +83,25 @@ void StereoNode::ImageCallback(const sensor_msgs::ImageConstPtr& msgLeft,
                          cv_ptrLeft->header.stamp.toSec());
 
   Update();
-}
 
-void StereoNode::depthImageCallback(const sensor_msgs::ImageConstPtr& dpt_msg)
-{
-  cv_bridge::CvImageConstPtr cv_ptr_dpt;
-  try
+  // save depth image only when in mapping mode
+  if (!load_map_param_)
   {
-    cv_ptr_dpt = cv_bridge::toCvShare(dpt_msg);
-  }
-  catch (cv_bridge::Exception& e)
-  {
-    ROS_ERROR("cv_bridge exception: %s", e.what());
-    return;
-  }
+    cv_bridge::CvImageConstPtr cv_ptr_dpt;
+    try
+    {
+      cv_ptr_dpt = cv_bridge::toCvShare(msgDetph);
+    }
+    catch (cv_bridge::Exception& e)
+    {
+      ROS_ERROR("cv_bridge exception: %s", e.what());
+      return;
+    }
 
-  std::stringstream ss_dpt;
-  ss_dpt << "dpt_" << dpt_msg->header.seq << ".pgm";
-  cv::imwrite(ss_dpt.str(), cv_ptr_dpt->image);
+    std::stringstream ss_dpt;
+    ss_dpt << "dpt_" << msgDetph->header.seq << ".pgm";
+    cv::imwrite(ss_dpt.str(), cv_ptr_dpt->image);
 
-  dpt_dataset_.push_back(std::make_pair(dpt_msg->header.stamp.toSec(), ss_dpt.str()));
+    dpt_dataset_.push_back(std::make_pair(cv_ptrLeft->header.stamp.toSec(), ss_dpt.str()));
+  }
 }
