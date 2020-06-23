@@ -2,6 +2,18 @@
 Changelog for package orb_slam2_ros
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Merge branch 'stereo-slam' into 'dubnium-devel'
+  Stereo slam
+  See merge request ros-overlays/orb_slam_2_ros!8
+* added depth subscriber to synchronizer message_filter
+* handling dataset storing in both cases: RGBD + STEREO
+* applying beautifier
+* added depth image subscriber
+* changes to config and launch files for using IR images
+* Contributors: Federico Nardi, procopiostein
+
 2.0.2 (2020-05-25)
 ------------------
 * Merge branch 'dev' into 'dubnium-devel'
