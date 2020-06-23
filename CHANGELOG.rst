@@ -2,8 +2,8 @@
 Changelog for package orb_slam2_ros
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+2.0.3 (2020-06-23)
+------------------
 * Merge branch 'stereo-slam' into 'dubnium-devel'
   Stereo slam
   See merge request ros-overlays/orb_slam_2_ros!8
