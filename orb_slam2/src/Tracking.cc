@@ -1155,11 +1155,14 @@ void Tracking::CreateNewKeyFrame()
   mnLastKeyFrameId = mCurrentFrame.mnId;
   mpLastKeyFrame = pKF;
 
-  std::stringstream ss_dpt;
-  ss_dpt << "dpt_" << mnLastKeyFrameId << ".pgm";
-  cv::imwrite(ss_dpt.str(), imDepthRaw);
+  if (mSensor == System::RGBD)
+  {
+    std::stringstream ss_dpt;
+    ss_dpt << "dpt_" << mnLastKeyFrameId << ".pgm";
+    cv::imwrite(ss_dpt.str(), imDepthRaw);
 
-  dataset_.push_back(std::make_pair(mCurrentFrame.mTimeStamp,ss_dpt.str()));
+    dataset_.push_back(std::make_pair(mCurrentFrame.mTimeStamp, ss_dpt.str()));
+  }
 }
 
 void Tracking::SearchLocalPoints()

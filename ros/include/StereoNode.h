@@ -20,17 +20,19 @@
 
 class StereoNode : public Node
 {
-  public:
-    StereoNode (const ORB_SLAM2::System::eSensor sensor, ros::NodeHandle &node_handle, image_transport::ImageTransport &image_transport);
-    ~StereoNode ();
-    void ImageCallback (const sensor_msgs::ImageConstPtr& msgLeft,const sensor_msgs::ImageConstPtr& msgRight);
+public:
+  StereoNode(const ORB_SLAM2::System::eSensor sensor, ros::NodeHandle &node_handle,
+             image_transport::ImageTransport &image_transport);
+  ~StereoNode();
+
+  void ImageCallback(const sensor_msgs::ImageConstPtr &msgLeft,
+                     const sensor_msgs::ImageConstPtr &msgRight,
+                     const sensor_msgs::ImageConstPtr &msgDetph);
 
 private:
-    typedef message_filters::sync_policies::ApproximateTime<sensor_msgs::Image, sensor_msgs::Image> sync_pol;
-    message_filters::Subscriber<sensor_msgs::Image> *left_sub_;
-    message_filters::Subscriber<sensor_msgs::Image> *right_sub_;
-    message_filters::Synchronizer<sync_pol> *sync_;
-
-
+  typedef message_filters::sync_policies::ApproximateTime<sensor_msgs::Image, sensor_msgs::Image, sensor_msgs::Image> sync_pol;
+  message_filters::Subscriber<sensor_msgs::Image> *left_sub_;
+  message_filters::Subscriber<sensor_msgs::Image> *right_sub_;
+  message_filters::Subscriber<sensor_msgs::Image> *depth_sub_;
+  message_filters::Synchronizer<sync_pol> *sync_;
 };
-
