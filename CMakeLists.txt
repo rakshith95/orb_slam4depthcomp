@@ -17,16 +17,16 @@ ENDIF()
 LIST(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/orb_slam2/cmake_modules)
 
 find_package (catkin REQUIRED COMPONENTS
-  roscpp
-  rospy
-  std_msgs
-  cv_bridge
-  image_transport
-  tf
-  sensor_msgs
-  dynamic_reconfigure
-  message_generation
-  angles
+roscpp
+rospy
+std_msgs
+cv_bridge
+image_transport
+tf
+sensor_msgs
+dynamic_reconfigure
+message_generation
+occupancy_grid_extractor
 )
 disable_pal_flags()
 

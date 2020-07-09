@@ -41,9 +41,6 @@ Node::Node(ORB_SLAM2::System::eSensor sensor, ros::NodeHandle& node_handle,
         node_handle_.advertise<sensor_msgs::PointCloud2>(name_of_node_ + "/map_points", 1);
   }
 
-  node_handle_.param<std::string>(name_of_node_ + "/storage_path", storage_path_, "~");
-  chdir(storage_path_.c_str());
-
   // Enable publishing camera's pose as PoseStamped message
   if (publish_pose_param_)
   {
@@ -91,24 +88,35 @@ Node::Node(ORB_SLAM2::System::eSensor sensor, ros::NodeHandle& node_handle,
     }
   }
 
+  // subscribe to camera_info
+  camera_info_sub_ = node_handle_.subscribe("/camera_info", 1, &Node::cameraInfoCallback, this);
+
+  // listen to camera pose
+  while (!got_camera_pose_)
+  {
+    try
+    {
+      listener_.lookupTransform(base_footprint_frame_id_, robot_camera_frame_id_,
+                                ros::Time(0), camera_pose_);
+    }
+    catch (tf::TransformException ex)
+    {
+      ROS_ERROR("%s", ex.what());
+      ros::Duration(1.0).sleep();
+      continue;
+    }
+    got_camera_pose_ = true;
+  }
+
+  // occupancy_grid publisher
+  occupancy_grid_pub_ = node_handle_.advertise<nav_msgs::OccupancyGrid>("/map", 1);
+
   ROS_INFO_STREAM("Started orb_slam2_ros node!!!");
 }
 
+
 Node::~Node()
 {
-  // Stop all threads
-  orb_slam_->Shutdown();
-
-  // Save camera trajectory
-  orb_slam_->SaveKeyFrameTrajectoryTUM("KeyFrameTrajectory.txt");
-
-  delete orb_slam_;
-}
-
-void Node::storeData()
-{
-  std::cerr << "Storing data!!!" << std::endl;
-
   // Stop all threads
   orb_slam_->Shutdown();
 
@@ -146,6 +154,109 @@ void Node::Update()
   {
     PublishMapPoints(orb_slam_->GetAllMapPoints());
   }
+
+  // check if a keyframe has been added
+  if (orb_slam_->tracker()->created_new_key_frame_)
+  {
+    // publish occupancy grid
+  }
+}
+
+void Node::publishOccupancyGrid()
+{
+  if (!got_camera_info_ || !got_camera_pose_)
+  {
+    return;
+  }
+
+  float depth_scale = 1e-3f;
+  float min_distance = 0.35f;
+  float max_distance = 1.85f;
+  float merging_distance = 0.05f;
+  double voxel_grid_resolution = 0.025;
+  double occupancy_grid_resolution = 0.05;
+
+  // instantiate mapper
+  occupancy_grid_extractor::Mapper3d mapper(min_distance, max_distance, merging_distance,
+                                            voxel_grid_resolution);
+  mapper.setK(K_);
+
+  // retrieve keyframed
+  std::vector<ORB_SLAM2::KeyFrame*> vpKFs = orb_slam_->map()->GetAllKeyFrames();
+  sort(vpKFs.begin(), vpKFs.end(), ORB_SLAM2::KeyFrame::lId);
+
+  // assemble global cloud
+  Eigen::Isometry3d pose = Eigen::Isometry3d::Identity();
+  occupancy_grid_extractor::Vector3dVector global_cloud;
+  for (size_t i = 0; i < vpKFs.size(); i++)
+  {
+    // get current keyframe
+    ORB_SLAM2::KeyFrame* pKF = vpKFs[i];
+    if (pKF->isBad())
+      continue;
+
+    // retrieve keyframe pose
+    cv::Mat R = pKF->GetRotation().t();
+    vector<float> q = ORB_SLAM2::Converter::toQuaternion(R);
+    cv::Mat t = pKF->GetCameraCenter();
+    pose.translation() = Eigen::Vector3d(t.at<float>(0), t.at<float>(1), t.at<float>(2));
+    pose.linear() = Eigen::Quaterniond(q[3], q[0], q[1], q[2]).toRotationMatrix();
+
+    // retrieve keyframe depth image
+    DoubleCvMatUnorderedMap::const_iterator it = image_dataset_.find(pKF->mTimeStamp);
+    if (it == image_dataset_.end())
+    {
+      // TODO handle error
+    }
+    else
+    {
+      occupancy_grid_extractor::FloatImage current_image;
+      occupancy_grid_extractor::convert_16UC1_to_32FC1(current_image, it->second, depth_scale);
+
+      // process depth image
+      mapper.processDepthImage(current_image, pose, global_cloud);
+    }
+  }
+
+  // transform point cloud in global coordinate frame
+  mapper.transformCloud(pose, global_cloud);
+
+  // get camera pose wrt the robot
+  Eigen::Isometry3d camera_pose = Eigen::Isometry3d::Identity();
+  camera_pose.translation() =
+      Eigen::Vector3d(camera_pose_.getOrigin().getX(), camera_pose_.getOrigin().getY(),
+                      camera_pose_.getOrigin().getZ());
+  camera_pose.linear() =
+      Eigen::Quaterniond(camera_pose_.getRotation().getW(), camera_pose_.getRotation().getX(),
+                         camera_pose_.getRotation().getY(), camera_pose_.getRotation().getZ())
+          .toRotationMatrix();
+
+  // transform point cloud in canonical coordinate frame
+  mapper.transformCloud(camera_pose, global_cloud);
+
+  // build occupancy grid
+  navigation_utils::DenseGrid grid;
+  occupancy_grid_extractor::OccupancyGridExtractor extractor(occupancy_grid_resolution);
+  extractor.compute(global_cloud, grid);
+
+  // convert grid to cv mat
+  cv::Mat occupancy_img = navigation_utils::drawIndexImage(grid);
+
+  // create occupancy grid
+  nav_msgs::OccupancyGrid occupancy_grid;
+  pal_map_utils::cvMat2occGrid(occupancy_img, occupancy_grid);
+
+  // set resolution
+  occupancy_grid.info.resolution = grid.resolution();
+
+  // set origin
+  tf2::Transform map_origin;
+  map_origin.setIdentity();
+  map_origin.setOrigin(tf2::Vector3(grid.originX(), grid.originY(), 0));
+  tf2::toMsg(map_origin, occupancy_grid.info.origin);
+
+  // publish map
+  occupancy_grid_pub_.publish(occupancy_grid);
 }
 
 void Node::PublishMapPoints(std::vector<ORB_SLAM2::MapPoint*> map_points)
@@ -308,14 +419,14 @@ sensor_msgs::PointCloud2 Node::MapPointsToPointCloud(std::vector<ORB_SLAM2::MapP
           map_points.at(i)->GetWorldPos().at<float>(2);  // x. Do the transformation by
                                                          // just reading at the position
                                                          // of z instead of x
-      data_array[1] = -1.0 *
-                      map_points.at(i)->GetWorldPos().at<float>(
-                          0);  // y. Do the transformation by just reading
-                               // at the position of x instead of y
-      data_array[2] = -1.0 *
-                      map_points.at(i)->GetWorldPos().at<float>(
-                          1);  // z. Do the transformation by just reading
-                               // at the position of y instead of z
+      data_array[1] = -1.0 * map_points.at(i)->GetWorldPos().at<float>(0);  // y. Do the
+      // transformation by just
+      // reading at the position
+      // of x instead of y
+      data_array[2] = -1.0 * map_points.at(i)->GetWorldPos().at<float>(1);  // z. Do the
+      // transformation by just
+      // reading at the position
+      // of y instead of z
       // TODO dont hack the transformation but have a central conversion function for
       // MapPointsToPointCloud and
       // TransformFromMat
@@ -364,19 +475,16 @@ bool Node::SaveMapSrv(orb_slam2_ros::SaveMap::Request& req, orb_slam2_ros::SaveM
 
   orb_slam_->SaveKeyFrameTrajectoryTUM("KeyFrameTrajectory.txt");
 
-  if (orb_slam_->sensor() == ORB_SLAM2::System::STEREO)
-  {
-    ofstream out;
-    out.open("dataset.txt");
-    out << std::fixed;
-
-    for (size_t i = 0; i < dpt_dataset_.size(); ++i)
-    {
-      out << dpt_dataset_[i].first << " " << dpt_dataset_[i].second << std::endl;
-    }
-    out.close();
-    cout << endl << "depth images dataset saved!" << endl;
-  }
-
   return res.success;
+}
+
+void Node::cameraInfoCallback(const sensor_msgs::CameraInfo::ConstPtr& camera_info_msg)
+{
+  K_ << camera_info_msg->K[0], camera_info_msg->K[1], camera_info_msg->K[2],
+      camera_info_msg->K[3], camera_info_msg->K[4], camera_info_msg->K[5],
+      camera_info_msg->K[6], camera_info_msg->K[7], camera_info_msg->K[8];
+  ROS_INFO_STREAM("K: \n" << K_);
+
+  got_camera_info_ = true;
+  camera_info_sub_.shutdown();
 }

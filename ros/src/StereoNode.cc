@@ -95,26 +95,12 @@ void StereoNode::ImageCallback(const sensor_msgs::ImageConstPtr& msgLeft,
   orb_slam_->TrackStereo(cv_ptrLeft->image, cv_ptrRight->image,
                          cv_ptrLeft->header.stamp.toSec());
 
-  Update();
-
-  // save depth image only when in mapping mode
-  if (!load_map_param_)
+  if (orb_slam_->tracker()->created_new_key_frame_)
   {
-    cv_bridge::CvImageConstPtr cv_ptr_dpt;
-    try
-    {
-      cv_ptr_dpt = cv_bridge::toCvShare(msgDetph);
-    }
-    catch (cv_bridge::Exception& e)
-    {
-      ROS_ERROR("cv_bridge exception: %s", e.what());
-      return;
-    }
-
-    std::stringstream ss_dpt;
-    ss_dpt << "dpt_" << msgDetph->header.seq << ".pgm";
-    cv::imwrite(ss_dpt.str(), cv_ptr_dpt->image);
-
-    dpt_dataset_.push_back(std::make_pair(cv_ptrLeft->header.stamp.toSec(), ss_dpt.str()));
+    // store depth image
+    image_dataset_.insert(std::make_pair(cv_ptrLeft->header.stamp.toSec(),
+                                         cv_bridge::toCvShare(msgDetph)->image));
   }
+
+  Update();
 }

@@ -19,9 +19,8 @@
   <build_depend>sensor_msgs</build_depend>
   <build_depend>dynamic_reconfigure</build_depend>
   <build_depend>message_generation</build_depend>
-  <build_depend>eigen</build_depend>
-  <build_depend>angles</build_depend>
-
+  <build_depend>occupancy_grid_extractor</build_depend>
+ 
   <exec_depend>roscpp</exec_depend>
   <exec_depend>rospy</exec_depend>
   <exec_depend>std_msgs</exec_depend>
@@ -33,6 +32,7 @@
   <exec_depend>message_runtime</exec_depend>
   <exec_depend>eigen</exec_depend>
   <exec_depend>angles</exec_depend>
+  <exec_depend>occupancy_grid_extractor</exec_depend>
 
   <build_export_depend>roscpp</build_export_depend>
   <build_export_depend>rospy</build_export_depend>

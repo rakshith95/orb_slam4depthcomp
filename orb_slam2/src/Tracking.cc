@@ -273,10 +273,14 @@ cv::Mat Tracking::GrabImageMonocular(const cv::Mat& im, const double& timestamp)
 
 void Tracking::Track()
 {
-  if (mState == NO_IMAGES_YET)
-  {
-    mState = NOT_INITIALIZED;
-  }
+  created_new_key_frame_ = false;
+
+    if(mState==NO_IMAGES_YET)
+    {
+        mState = NOT_INITIALIZED;
+    }
+
+    mLastProcessedState=mState;
 
   mLastProcessedState = mState;
 
@@ -340,16 +344,55 @@ void Tracking::Track()
       {
         if (!mbVO)
         {
-          // In last frame we tracked enough MapPoints in the map
+            // Update motion model
+            if(!mLastFrame.mTcw.empty())
+            {
+                cv::Mat LastTwc = cv::Mat::eye(4,4,CV_32F);
+                mLastFrame.GetRotationInverse().copyTo(LastTwc.rowRange(0,3).colRange(0,3));
+                mLastFrame.GetCameraCenter().copyTo(LastTwc.rowRange(0,3).col(3));
+                mVelocity = mCurrentFrame.mTcw*LastTwc;
+            }
+            else
+                mVelocity = cv::Mat();
 
-          if (!mVelocity.empty())
-          {
-            bOK = TrackWithMotionModel();
-          }
-          else
-          {
-            bOK = TrackReferenceKeyFrame();
-          }
+            //mpMapDrawer->SetCurrentCameraPose(mCurrentFrame.mTcw);
+
+            // Clean VO matches
+            for(int i=0; i<mCurrentFrame.N; i++)
+            {
+                MapPoint* pMP = mCurrentFrame.mvpMapPoints[i];
+                if(pMP)
+                    if(pMP->Observations()<1)
+                    {
+                        mCurrentFrame.mvbOutlier[i] = false;
+                        mCurrentFrame.mvpMapPoints[i]=static_cast<MapPoint*>(NULL);
+                    }
+            }
+
+            // Delete temporal MapPoints
+            for(list<MapPoint*>::iterator lit = mlpTemporalPoints.begin(), lend =  mlpTemporalPoints.end(); lit!=lend; lit++)
+            {
+                MapPoint* pMP = *lit;
+                delete pMP;
+            }
+            mlpTemporalPoints.clear();
+
+            // Check if we need to insert a new keyframe
+            if(NeedNewKeyFrame())
+            {
+              CreateNewKeyFrame();
+              created_new_key_frame_ = true;
+            }
+
+            // We allow points with high innovation (considererd outliers by the Huber Function)
+            // pass to the new keyframe, so that bundle adjustment will finally decide
+            // if they are outliers or not. We don't want next frame to estimate its position
+            // with those points so we discard them in the frame.
+            for(int i=0; i<mCurrentFrame.N;i++)
+            {
+                if(mCurrentFrame.mvpMapPoints[i] && mCurrentFrame.mvbOutlier[i])
+                    mCurrentFrame.mvpMapPoints[i]=static_cast<MapPoint*>(NULL);
+            }
         }
         else
         {

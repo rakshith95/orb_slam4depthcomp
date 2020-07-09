@@ -115,6 +115,7 @@ public:
     void Reset();
 
     eTrackingState state(){return mState;}
+    bool created_new_key_frame_ = false;
 
 protected:
 
