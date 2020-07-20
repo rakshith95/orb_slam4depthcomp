@@ -77,7 +77,7 @@ class Node
 
   private:
     void PublishMapPoints (std::vector<ORB_SLAM2::MapPoint*> map_points);
-    void PublishPositionAsTransform (cv::Mat position);
+    //    void PublishPositionAsTransform (cv::Mat position);
     void PublishPositionAsPoseStamped(cv::Mat position);
     void PublishRenderedImage (cv::Mat image);
     void ParamsChangedCallback(orb_slam2_ros::dynamic_reconfigureConfig &config, uint32_t level);
@@ -104,9 +104,10 @@ protected:
 
     tf::TransformListener listener_;
     tf::StampedTransform odom_tf_;
-    tf::StampedTransform last_odom_pose_;
+    tf::StampedTransform last_odom_tf_;
     tf::StampedTransform camera_pose_;
     tf::Transform last_corrected_pose_;
+    tf::Transform last_good_odom_tf_;
 
     tf::TransformBroadcaster tf_broadcaster;
 
@@ -126,13 +127,13 @@ protected:
 
     bool hasMovedEnough()
     {
-      double travel_distance = (odom_tf_.getOrigin() - last_odom_pose_.getOrigin()).length();
+      double travel_distance = (odom_tf_.getOrigin() - last_odom_tf_.getOrigin()).length();
       double travel_heading = angles::shortest_angular_distance(tf::getYaw(odom_tf_.getRotation()),
-                                                                tf::getYaw(last_odom_pose_.getRotation()));
+                                                                tf::getYaw(last_odom_tf_.getRotation()));
       return (travel_distance > minimum_travel_distance_ || travel_heading > minimum_travel_heading_);
     }
 
-    cv::Mat last_position_;
+    bool lost_ = false;
 };
 
 #endif //ORBSLAM2_ROS_NODE_H_

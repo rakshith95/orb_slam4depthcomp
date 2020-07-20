@@ -114,6 +114,8 @@ public:
 
     void Reset();
 
+    eTrackingState state(){return mState;}
+
 protected:
 
     // Main tracking function. It is independent of the input sensor.

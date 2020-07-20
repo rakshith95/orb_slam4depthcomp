@@ -77,6 +77,7 @@ void StereoNode::ImageCallback(const sensor_msgs::ImageConstPtr& msgLeft,
     return;
   }
 
+  // get odom
   try
   {
     listener_.lookupTransform(odom_frame_id_, base_footprint_frame_id_, ros::Time(0), odom_tf_);
@@ -87,6 +88,7 @@ void StereoNode::ImageCallback(const sensor_msgs::ImageConstPtr& msgLeft,
     ros::Duration(1.0).sleep();
     return;
   }
+
 
   current_frame_time_ = msgLeft->header.stamp;
 
