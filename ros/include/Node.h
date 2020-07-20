@@ -97,12 +97,13 @@ class Node
     std::string name_of_node_;
     ros::NodeHandle node_handle_;
 
-
+protected:
     // pal stuff
     bool first_ = true;
     bool got_tf_ = false;
 
     tf::TransformListener listener_;
+    tf::StampedTransform odom_tf_;
     tf::StampedTransform last_odom_pose_;
     tf::StampedTransform camera_pose_;
     tf::Transform last_corrected_pose_;
@@ -123,13 +124,15 @@ class Node
 
     double transform_tolerance_;
 
-    bool hasMovedEnough(const tf::Transform& odom_tf)
+    bool hasMovedEnough()
     {
-      double travel_distance = (odom_tf.getOrigin() - last_odom_pose_.getOrigin()).length();
-      double travel_heading = angles::shortest_angular_distance(tf::getYaw(odom_tf.getRotation()),
+      double travel_distance = (odom_tf_.getOrigin() - last_odom_pose_.getOrigin()).length();
+      double travel_heading = angles::shortest_angular_distance(tf::getYaw(odom_tf_.getRotation()),
                                                                 tf::getYaw(last_odom_pose_.getRotation()));
       return (travel_distance > minimum_travel_distance_ || travel_heading > minimum_travel_heading_);
     }
+
+    cv::Mat last_position_;
 };
 
 #endif //ORBSLAM2_ROS_NODE_H_
