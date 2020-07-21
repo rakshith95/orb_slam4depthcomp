@@ -132,6 +132,10 @@ protected:
                                                                 tf::getYaw(last_odom_tf_.getRotation()));
       return (travel_distance > minimum_travel_distance_ || travel_heading > minimum_travel_heading_);
     }
+
+    void poseCallback(const geometry_msgs::PoseWithCovarianceStamped::ConstPtr& msg);
+
+    ros::Subscriber pose_sub_;
 };
 
 #endif //ORBSLAM2_ROS_NODE_H_

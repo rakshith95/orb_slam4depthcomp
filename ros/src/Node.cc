@@ -68,6 +68,8 @@ Node::Node(ORB_SLAM2::System::eSensor sensor, ros::NodeHandle& node_handle,
     node_handle_.param(name_of_node_ + "/minimum_travel_heading", minimum_travel_heading_, 0.017);
     node_handle_.param(name_of_node_ + "/transform_tolerance", transform_tolerance_, 0.27);
 
+    pose_sub_ = node_handle_.subscribe("/initialpose", 1, &Node::poseCallback, this);
+
     // let's wait for tf buffer to fill up
     ros::Duration(2.0).sleep();
 
@@ -120,11 +122,11 @@ void Node::Update()
 {
   cv::Mat position = orb_slam_->GetCurrentPosition();
 
-  if (!correct_global_frame_) // old behavior
+  if (!correct_global_frame_)  // old behavior
   {
-    PublishPositionAsTransform (position);
+    PublishPositionAsTransform(position);
   }
-  else // new behavior
+  else  // new behavior
   {
     PublishRobotPose(position);
   }
@@ -163,6 +165,8 @@ void Node::PublishRobotPose(cv::Mat position)
 
     tf_broadcaster.sendTransform(tf::StampedTransform(
         last_corrected_pose_, shifted_time, corrected_map_frame_id_, odom_frame_id_));
+
+    return;
   }
   else if (orb_slam_->tracker()->state() ==
            ORB_SLAM2::Tracking::OK)  // update corrected tf
@@ -186,10 +190,10 @@ void Node::PublishRobotPose(cv::Mat position)
 
     tf_broadcaster.sendTransform(tf::StampedTransform(
         only_2d_tf, shifted_time, corrected_map_frame_id_, odom_frame_id_));
-
-    // update last odom
-    last_odom_tf_.setData(odom_tf_);
   }
+
+  // update last odom
+  last_odom_tf_.setData(odom_tf_);
 
   // set first to false
   first_ = false;
@@ -321,6 +325,14 @@ sensor_msgs::PointCloud2 Node::MapPointsToPointCloud(std::vector<ORB_SLAM2::MapP
   }
 
   return cloud;
+}
+
+void Node::poseCallback(const geometry_msgs::PoseWithCovarianceStamped::ConstPtr& msg)
+{
+  tf::Transform map_tf;
+  tf::poseMsgToTF(msg->pose.pose, map_tf);
+
+  last_corrected_pose_ = map_tf * last_odom_tf_.inverse();
 }
 
 void Node::ParamsChangedCallback(orb_slam2_ros::dynamic_reconfigureConfig& config, uint32_t level)
