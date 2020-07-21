@@ -118,16 +118,16 @@ void Node::storeData()
 
 void Node::Update()
 {
-  // new behavior
-  //  if (!got_tf_)
-  //  {
-  //    ROS_WARN_STREAM("Still waiting for base_link->camera transform!!!");
-  //    return;
-  //  }
-
-  ros::Time shifted_time = current_frame_time_ + ros::Duration(transform_tolerance_);
-
   cv::Mat position = orb_slam_->GetCurrentPosition();
+
+  if (!correct_global_frame_) // old behavior
+  {
+    PublishPositionAsTransform (position);
+  }
+  else // new behavior
+  {
+    PublishRobotPose(position);
+  }
 
   if (publish_pose_param_)
   {
@@ -144,9 +144,19 @@ void Node::Update()
   {
     PublishMapPoints(orb_slam_->GetAllMapPoints());
   }
+}
 
-  // no need to update the tf
-  if (!first_ && !hasMovedEnough())
+void Node::PublishMapPoints(std::vector<ORB_SLAM2::MapPoint*> map_points)
+{
+  sensor_msgs::PointCloud2 cloud = MapPointsToPointCloud(map_points);
+  map_points_publisher_.publish(cloud);
+}
+
+void Node::PublishRobotPose(cv::Mat position)
+{
+  ros::Time shifted_time = current_frame_time_ + ros::Duration(transform_tolerance_);
+
+  if (!first_ && !hasMovedEnough())  // no need to update the tf
   {
     tf_broadcaster.sendTransform(tf::StampedTransform(
         camera_pose_, shifted_time, corrected_map_frame_id_, map_frame_id_param_));
@@ -154,55 +164,28 @@ void Node::Update()
     tf_broadcaster.sendTransform(tf::StampedTransform(
         last_corrected_pose_, shifted_time, corrected_map_frame_id_, odom_frame_id_));
   }
-  else
+  else if (orb_slam_->tracker()->state() ==
+           ORB_SLAM2::Tracking::OK)  // update corrected tf
   {
-    // we lost track so we rely on odometry
-    if (!first_ && orb_slam_->tracker()->state() == ORB_SLAM2::Tracking::LOST)
-    {
-      if (!lost_)
-      {
-        last_good_odom_tf_ = last_odom_tf_;
-        lost_ = true;
-      }
+    tf::Transform corrected_tf =
+        camera_pose_ * (TransformFromMat(position) * (odom_tf_ * camera_pose_).inverse());
 
-      // compute motion from odometry
-      tf::Transform delta_odom = last_good_odom_tf_.inverse() * odom_tf_;
+    // extract only 2d tf
+    tf::Transform only_2d_tf;
+    only_2d_tf.setIdentity();
+    only_2d_tf.setOrigin(
+        tf::Vector3(corrected_tf.getOrigin().getX(), corrected_tf.getOrigin().getY(), 0));
+    tf::Quaternion q;
+    q.setEuler(0, 0, tf::getYaw(corrected_tf.getRotation()));
+    only_2d_tf.setRotation(q);
+    last_corrected_pose_ = only_2d_tf;
 
-      tf_broadcaster.sendTransform(tf::StampedTransform(
-          camera_pose_, shifted_time, corrected_map_frame_id_, map_frame_id_param_));
+    // broadcast robot pose with transform estimated by visual slam
+    tf_broadcaster.sendTransform(tf::StampedTransform(
+        camera_pose_, shifted_time, corrected_map_frame_id_, map_frame_id_param_));
 
-      tf_broadcaster.sendTransform(
-          tf::StampedTransform(last_corrected_pose_ * delta_odom, shifted_time,
-                               corrected_map_frame_id_, odom_frame_id_));
-    }
-    else
-    {
-      // update corrected tf
-      tf::Transform current_tf = TransformFromMat(position);
-      tf::Transform tf1 = camera_pose_.inverse() * odom_tf_.inverse();
-      tf::Transform tf2 = current_tf * tf1;
-      tf::Transform corrected_tf = camera_pose_ * tf2;
-
-      // extract only 2d tf
-      tf::Transform only_2d_tf;
-      only_2d_tf.setIdentity();
-      only_2d_tf.setOrigin(tf::Vector3(corrected_tf.getOrigin().getX(),
-                                       corrected_tf.getOrigin().getY(), 0));
-      tf::Quaternion q;
-      q.setEuler(0, 0, tf::getYaw(corrected_tf.getRotation()));
-      only_2d_tf.setRotation(q);
-      last_corrected_pose_ = only_2d_tf;
-
-      // broadcast robot pose with transform estimated by visual slam
-      tf_broadcaster.sendTransform(tf::StampedTransform(
-          camera_pose_, shifted_time, corrected_map_frame_id_, map_frame_id_param_));
-
-      tf_broadcaster.sendTransform(tf::StampedTransform(
-          only_2d_tf, shifted_time, corrected_map_frame_id_, odom_frame_id_));
-
-      // reset boolean
-      lost_ = false;
-    }
+    tf_broadcaster.sendTransform(tf::StampedTransform(
+        only_2d_tf, shifted_time, corrected_map_frame_id_, odom_frame_id_));
 
     // update last odom
     last_odom_tf_.setData(odom_tf_);
@@ -212,69 +195,13 @@ void Node::Update()
   first_ = false;
 }
 
-void Node::PublishMapPoints(std::vector<ORB_SLAM2::MapPoint*> map_points)
+void Node::PublishPositionAsTransform(cv::Mat position)
 {
-  sensor_msgs::PointCloud2 cloud = MapPointsToPointCloud(map_points);
-  map_points_publisher_.publish(cloud);
+  tf::Transform transform = TransformFromMat(position);
+  static tf::TransformBroadcaster tf_broadcaster;
+  tf_broadcaster.sendTransform(tf::StampedTransform(
+      transform, current_frame_time_, map_frame_id_param_, camera_frame_id_param_));
 }
-
-// void Node::PublishPositionAsTransform(cv::Mat position)
-//{
-//  // old behavior
-//  if (!correct_global_frame_)
-//  {
-//    tf::Transform transform = TransformFromMat(position);
-//    static tf::TransformBroadcaster tf_broadcaster;
-//    tf_broadcaster.sendTransform(tf::StampedTransform(
-//        transform, current_frame_time_, map_frame_id_param_, camera_frame_id_param_));
-//    return;
-//  }
-
-//  // new behavior
-//  if (!got_tf_)
-//  {
-//    ROS_WARN_STREAM("Still waiting for base_link->camera transform!!!");
-//    return;
-//  }
-
-
-//  // check that robot has moved enough
-//  ros::Time shifted_time = current_frame_time_ + ros::Duration(transform_tolerance_);
-//  if (!first_ && !hasMovedEnough())
-//  {
-//    tf_broadcaster.sendTransform(tf::StampedTransform(
-//        camera_pose_, shifted_time, corrected_map_frame_id_, map_frame_id_param_));
-
-//    tf_broadcaster.sendTransform(tf::StampedTransform(
-//        last_corrected_pose_, shifted_time, corrected_map_frame_id_, odom_frame_id_));
-//    return;
-//  }
-
-//  // update corrected tf
-//  tf::Transform current_tf = TransformFromMat(position);
-//  tf::Transform tf1 = camera_pose_.inverse() * odom_tf_.inverse();
-//  tf::Transform tf2 = current_tf * tf1;
-//  tf::Transform corrected_tf = camera_pose_ * tf2;
-
-//  // extract only 2d tf
-//  tf::Transform only_2d_tf;
-//  only_2d_tf.setIdentity();
-//  only_2d_tf.setOrigin(
-//      tf::Vector3(corrected_tf.getOrigin().getX(), corrected_tf.getOrigin().getY(), 0));
-//  tf::Quaternion q;
-//  q.setEuler(0, 0, tf::getYaw(corrected_tf.getRotation()));
-//  only_2d_tf.setRotation(q);
-//  last_corrected_pose_ = only_2d_tf;
-
-//  tf_broadcaster.sendTransform(tf::StampedTransform(
-//      camera_pose_, shifted_time, corrected_map_frame_id_, map_frame_id_param_));
-
-//  tf_broadcaster.sendTransform(tf::StampedTransform(
-//      only_2d_tf, shifted_time, corrected_map_frame_id_, odom_frame_id_));
-
-//  first_ = false;
-//  last_odom_tf_.setData(odom_tf_);
-//}
 
 void Node::PublishPositionAsPoseStamped(cv::Mat position)
 {
