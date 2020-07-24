@@ -89,7 +89,9 @@ Node::Node(ORB_SLAM2::System::eSensor sensor, ros::NodeHandle& node_handle,
   }
 
   // subscribe to camera_info
-  camera_info_sub_ = node_handle_.subscribe("/camera_info", 1, &Node::cameraInfoCallback, this);
+  camera_info_sub_ =
+      node_handle_.subscribe("/torso_front_camera/aligned_depth_to_color/camera_info", 1,
+                             &Node::cameraInfoCallback, this);
 
   // listen to camera pose
   while (!got_camera_pose_)
@@ -158,7 +160,18 @@ void Node::Update()
   // check if a keyframe has been added
   if (orb_slam_->tracker()->created_new_key_frame_)
   {
+    ROS_INFO("Publishing occupancy grid");
     // publish occupancy grid
+    boost::recursive_mutex::scoped_lock lock(lock_);
+    if (running_)
+    {
+      std::cout << "thread already running!!!" << std::endl;
+      killed_ = true;
+      std::cout << "wait for stopping..." << std::endl;
+      pending_future_.wait();
+      std::cout << "running thread stopped!!!" << std::endl;
+    }
+    pending_future_ = std::async(std::launch::async, &Node::publishOccupancyGrid, this);
   }
 }
 
@@ -168,6 +181,8 @@ void Node::publishOccupancyGrid()
   {
     return;
   }
+
+  running_ = true;
 
   float depth_scale = 1e-3f;
   float min_distance = 0.35f;
@@ -181,7 +196,7 @@ void Node::publishOccupancyGrid()
                                             voxel_grid_resolution);
   mapper.setK(K_);
 
-  // retrieve keyframed
+  // retrieve keyframe
   std::vector<ORB_SLAM2::KeyFrame*> vpKFs = orb_slam_->map()->GetAllKeyFrames();
   sort(vpKFs.begin(), vpKFs.end(), ORB_SLAM2::KeyFrame::lId);
 
@@ -190,10 +205,20 @@ void Node::publishOccupancyGrid()
   occupancy_grid_extractor::Vector3dVector global_cloud;
   for (size_t i = 0; i < vpKFs.size(); i++)
   {
+    if (killed_)
+    {
+      std::cout << "I received kill signal..." << std::endl;
+      running_ = false;
+      killed_ = false;
+      return;
+    }
+
     // get current keyframe
     ORB_SLAM2::KeyFrame* pKF = vpKFs[i];
     if (pKF->isBad())
+    {
       continue;
+    }
 
     // retrieve keyframe pose
     cv::Mat R = pKF->GetRotation().t();
@@ -215,6 +240,7 @@ void Node::publishOccupancyGrid()
 
       // process depth image
       mapper.processDepthImage(current_image, pose, global_cloud);
+      std::cerr << ".";
     }
   }
 
@@ -257,6 +283,8 @@ void Node::publishOccupancyGrid()
 
   // publish map
   occupancy_grid_pub_.publish(occupancy_grid);
+
+  running_ = false;
 }
 
 void Node::PublishMapPoints(std::vector<ORB_SLAM2::MapPoint*> map_points)

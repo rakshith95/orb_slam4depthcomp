@@ -89,7 +89,6 @@ void StereoNode::ImageCallback(const sensor_msgs::ImageConstPtr& msgLeft,
     return;
   }
 
-
   current_frame_time_ = msgLeft->header.stamp;
 
   orb_slam_->TrackStereo(cv_ptrLeft->image, cv_ptrRight->image,

@@ -62,6 +62,9 @@
 #include <tf/transform_listener.h>
 #include <angles/angles.h>
 
+#include <future>
+#include <boost/thread.hpp>
+
 class Node
 {
 public:
@@ -126,7 +129,6 @@ private:
   int min_observations_per_point_;
 
   ros::Subscriber camera_info_sub_;
-
   ros::Publisher occupancy_grid_pub_;
 
 protected:
@@ -163,6 +165,11 @@ protected:
 
   ros::Subscriber pose_sub_;
   void poseCallback(const geometry_msgs::PoseWithCovarianceStamped::ConstPtr &msg);
+
+  bool running_ = false;
+  bool killed_ = false;
+  std::future<void> pending_future_;
+  boost::recursive_mutex lock_;
 };
 
 #endif  // ORBSLAM2_ROS_NODE_H_
