@@ -77,6 +77,9 @@ Node::Node(ORB_SLAM2::System::eSensor sensor, ros::NodeHandle& node_handle,
       {
         listener_.lookupTransform(base_footprint_frame_id_, robot_camera_frame_id_,
                                   ros::Time(0), camera_pose_);
+        listener_.lookupTransform(base_footprint_frame_id_,
+                                  "torso_front_camera_depth_optical_frame", ros::Time(0),
+                                  camera_offset_);
       }
       catch (tf::TransformException ex)
       {
@@ -92,23 +95,6 @@ Node::Node(ORB_SLAM2::System::eSensor sensor, ros::NodeHandle& node_handle,
   camera_info_sub_ =
       node_handle_.subscribe("/torso_front_camera/aligned_depth_to_color/camera_info", 1,
                              &Node::cameraInfoCallback, this);
-
-  // listen to camera pose
-  while (!got_camera_pose_)
-  {
-    try
-    {
-      listener_.lookupTransform(base_footprint_frame_id_, robot_camera_frame_id_,
-                                ros::Time(0), camera_pose_);
-    }
-    catch (tf::TransformException ex)
-    {
-      ROS_ERROR("%s", ex.what());
-      ros::Duration(1.0).sleep();
-      continue;
-    }
-    got_camera_pose_ = true;
-  }
 
   // occupancy_grid publisher
   occupancy_grid_pub_ = node_handle_.advertise<nav_msgs::OccupancyGrid>("/map", 1);
@@ -160,16 +146,12 @@ void Node::Update()
   // check if a keyframe has been added
   if (orb_slam_->tracker()->created_new_key_frame_)
   {
-    ROS_INFO("Publishing occupancy grid");
     // publish occupancy grid
     boost::recursive_mutex::scoped_lock lock(lock_);
     if (running_)
     {
-      std::cout << "thread already running!!!" << std::endl;
       killed_ = true;
-      std::cout << "wait for stopping..." << std::endl;
       pending_future_.wait();
-      std::cout << "running thread stopped!!!" << std::endl;
     }
     pending_future_ = std::async(std::launch::async, &Node::publishOccupancyGrid, this);
   }
@@ -177,7 +159,7 @@ void Node::Update()
 
 void Node::publishOccupancyGrid()
 {
-  if (!got_camera_info_ || !got_camera_pose_)
+  if (!got_camera_info_ || !got_tf_)
   {
     return;
   }
@@ -200,6 +182,12 @@ void Node::publishOccupancyGrid()
   std::vector<ORB_SLAM2::KeyFrame*> vpKFs = orb_slam_->map()->GetAllKeyFrames();
   sort(vpKFs.begin(), vpKFs.end(), ORB_SLAM2::KeyFrame::lId);
 
+  if (vpKFs.size() < 6)
+  {
+    running_ = false;
+    return;
+  }
+
   // assemble global cloud
   Eigen::Isometry3d pose = Eigen::Isometry3d::Identity();
   occupancy_grid_extractor::Vector3dVector global_cloud;
@@ -207,7 +195,6 @@ void Node::publishOccupancyGrid()
   {
     if (killed_)
     {
-      std::cout << "I received kill signal..." << std::endl;
       running_ = false;
       killed_ = false;
       return;
@@ -224,6 +211,7 @@ void Node::publishOccupancyGrid()
     cv::Mat R = pKF->GetRotation().t();
     vector<float> q = ORB_SLAM2::Converter::toQuaternion(R);
     cv::Mat t = pKF->GetCameraCenter();
+    pose.setIdentity();
     pose.translation() = Eigen::Vector3d(t.at<float>(0), t.at<float>(1), t.at<float>(2));
     pose.linear() = Eigen::Quaterniond(q[3], q[0], q[1], q[2]).toRotationMatrix();
 
@@ -240,7 +228,21 @@ void Node::publishOccupancyGrid()
 
       // process depth image
       mapper.processDepthImage(current_image, pose, global_cloud);
-      std::cerr << ".";
+
+
+      if (!saved_)
+      {
+        cv::imwrite("/home/pal/dpt_img.pgm", it->second);
+        // convert point cloud in pcl format
+        PointCloudType::Ptr cloud(new PointCloudType());
+        occupancy_grid_extractor::convertToPcl(global_cloud, cloud);
+        pcl::io::savePCDFileASCII("/home/pal/test_pcd.pcd", *cloud);
+        std::cerr << "Saved " << cloud->points.size() << " data points to test_pcd.pcd."
+                  << std::endl;
+
+        saved_ = true;
+
+      }
     }
   }
 
@@ -250,12 +252,17 @@ void Node::publishOccupancyGrid()
   // get camera pose wrt the robot
   Eigen::Isometry3d camera_pose = Eigen::Isometry3d::Identity();
   camera_pose.translation() =
-      Eigen::Vector3d(camera_pose_.getOrigin().getX(), camera_pose_.getOrigin().getY(),
-                      camera_pose_.getOrigin().getZ());
-  camera_pose.linear() =
-      Eigen::Quaterniond(camera_pose_.getRotation().getW(), camera_pose_.getRotation().getX(),
-                         camera_pose_.getRotation().getY(), camera_pose_.getRotation().getZ())
-          .toRotationMatrix();
+      Eigen::Vector3d(camera_offset_.getOrigin().getX(), camera_offset_.getOrigin().getY(),
+                      camera_offset_.getOrigin().getZ());
+  camera_pose.linear() = Eigen::Quaterniond(camera_offset_.getRotation().getW(),
+                                            camera_offset_.getRotation().getX(),
+                                            camera_offset_.getRotation().getY(),
+                                            camera_offset_.getRotation().getZ())
+                             .toRotationMatrix();
+
+  std::cerr << "Camera offset: " << std::endl;
+  std::cerr << camera_pose.translation().transpose() << std::endl;
+  std::cerr << camera_pose.rotation().transpose() << std::endl;
 
   // transform point cloud in canonical coordinate frame
   mapper.transformCloud(camera_pose, global_cloud);
@@ -276,10 +283,10 @@ void Node::publishOccupancyGrid()
   occupancy_grid.info.resolution = grid.resolution();
 
   // set origin
-  tf2::Transform map_origin;
+  tf::Transform map_origin;
   map_origin.setIdentity();
-  map_origin.setOrigin(tf2::Vector3(grid.originX(), grid.originY(), 0));
-  tf2::toMsg(map_origin, occupancy_grid.info.origin);
+  map_origin.setOrigin(tf::Vector3(grid.originX(), grid.originY(), 0));
+  tf::poseTFToMsg(map_origin, occupancy_grid.info.origin);
 
   // publish map
   occupancy_grid_pub_.publish(occupancy_grid);
@@ -502,6 +509,20 @@ bool Node::SaveMapSrv(orb_slam2_ros::SaveMap::Request& req, orb_slam2_ros::SaveM
   }
 
   orb_slam_->SaveKeyFrameTrajectoryTUM("KeyFrameTrajectory.txt");
+
+  if (orb_slam_->sensor() == ORB_SLAM2::System::STEREO)
+  {
+    ofstream out;
+    out.open("dataset.txt");
+    out << std::fixed;
+
+    for (size_t i = 0; i < dpt_dataset_.size(); ++i)
+    {
+      out << dpt_dataset_[i].first << " " << dpt_dataset_[i].second << std::endl;
+    }
+    out.close();
+    cout << endl << "depth images dataset saved!" << endl;
+  }
 
   return res.success;
 }

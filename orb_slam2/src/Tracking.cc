@@ -473,7 +473,6 @@ void Tracking::Track()
       {
         CreateNewKeyFrame();
         created_new_key_frame_ = true;
-        std::cerr << "inserted new keyframe!!!" << std::endl;
       }
 
       // We allow points with high innovation (considererd outliers by the Huber Function)

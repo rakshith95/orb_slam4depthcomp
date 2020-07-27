@@ -57,6 +57,7 @@
 #include <nav_msgs/OccupancyGrid.h>
 #include <navigation_utils/offline_tools.h>
 #include <pal_map_utils/MapImgUtils.h>
+#include <pal_map_utils/MapSaveUtils.h>
 
 #include <Eigen/Geometry>
 #include <tf/transform_listener.h>
@@ -64,6 +65,13 @@
 
 #include <future>
 #include <boost/thread.hpp>
+
+#include <pcl/point_types.h>
+#include <pcl/point_cloud.h>
+#include <pcl/io/pcd_io.h>
+
+typedef pcl::PointXYZ PointType;
+typedef pcl::PointCloud<PointType> PointCloudType;
 
 class Node
 {
@@ -85,8 +93,10 @@ protected:
   bool got_camera_info_ = false;
   Eigen::Matrix3d K_;
 
-  bool got_camera_pose_ = false;
-  tf::StampedTransform camera_pose_;
+  tf::StampedTransform camera_pose_,camera_offset_;
+
+  bool load_map_param_;
+  std::vector<std::pair<double, std::string>> dpt_dataset_;
 
   tf::TransformListener listener_;
   std::string base_footprint_frame_id_ = "base_footprint";
@@ -123,7 +133,7 @@ private:
   std::string map_file_name_param_;
   std::string voc_file_name_param_;
   std::string settings_file_name_param_;
-  bool load_map_param_;
+
   bool publish_pointcloud_param_;
   bool publish_pose_param_;
   int min_observations_per_point_;
@@ -170,6 +180,8 @@ protected:
   bool killed_ = false;
   std::future<void> pending_future_;
   boost::recursive_mutex lock_;
+
+  bool saved_ = false;
 };
 
 #endif  // ORBSLAM2_ROS_NODE_H_

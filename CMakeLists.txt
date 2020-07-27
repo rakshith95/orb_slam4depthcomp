@@ -87,14 +87,27 @@ catkin_package (
   LIBRARIES {PROJECT_NAME} libDBoW2 libg2o
 )
 
+#include_directories(
+#  SYSTEM
+#  ${PROJECT_SOURCE_DIR}/orb_slam2
+#  ${PROJECT_SOURCE_DIR}/orb_slam2/include
+#  ${PROJECT_SOURCE_DIR}/ros/include
+#  ${EIGEN3_INCLUDE_DIR}
+#  ${catkin_INCLUDE_DIRS}
+#)
+
 include_directories(
-  SYSTEM
   ${PROJECT_SOURCE_DIR}/orb_slam2
   ${PROJECT_SOURCE_DIR}/orb_slam2/include
   ${PROJECT_SOURCE_DIR}/ros/include
+)
+
+include_directories(
+  SYSTEM
   ${EIGEN3_INCLUDE_DIR}
   ${catkin_INCLUDE_DIRS}
 )
+
 
 include(${PROJECT_SOURCE_DIR}/orb_slam2/Thirdparty/DBoW2/CMakeLists.txt)
 include(${PROJECT_SOURCE_DIR}/orb_slam2/Thirdparty/g2o/CMakeLists.txt)
