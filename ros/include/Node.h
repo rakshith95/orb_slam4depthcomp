@@ -73,8 +73,6 @@ class Node
     bool publish_pose_param_;
     int min_observations_per_point_;
 
-    std::vector<std::pair<double, std::string>> dpt_dataset_;
-
   private:
     void PublishMapPoints (std::vector<ORB_SLAM2::MapPoint*> map_points);
     void PublishPositionAsTransform (cv::Mat position);
@@ -119,6 +117,7 @@ protected:
     std::string corrected_map_frame_id_;
 
     std::string storage_path_;
+    std::vector<std::pair<double, std::string>> dpt_dataset_;
 
     double minimum_travel_distance_;
     double minimum_travel_heading_;
@@ -133,9 +132,8 @@ protected:
       return (travel_distance > minimum_travel_distance_ || travel_heading > minimum_travel_heading_);
     }
 
-    void poseCallback(const geometry_msgs::PoseWithCovarianceStamped::ConstPtr& msg);
-
     ros::Subscriber pose_sub_;
+    void poseCallback(const geometry_msgs::PoseWithCovarianceStamped::ConstPtr& msg);
 };
 
 #endif //ORBSLAM2_ROS_NODE_H_
