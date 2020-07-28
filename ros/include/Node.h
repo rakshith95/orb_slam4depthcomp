@@ -66,13 +66,6 @@
 #include <future>
 #include <boost/thread.hpp>
 
-#include <pcl/point_types.h>
-#include <pcl/point_cloud.h>
-#include <pcl/io/pcd_io.h>
-
-typedef pcl::PointXYZ PointType;
-typedef pcl::PointCloud<PointType> PointCloudType;
-
 class Node
 {
 public:
@@ -180,8 +173,6 @@ protected:
   bool killed_ = false;
   std::future<void> pending_future_;
   boost::recursive_mutex lock_;
-
-  bool saved_ = false;
 };
 
 #endif  // ORBSLAM2_ROS_NODE_H_

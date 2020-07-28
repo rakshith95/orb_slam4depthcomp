@@ -111,8 +111,7 @@ void StereoNode::ImageCallback(const sensor_msgs::ImageConstPtr& msgLeft,
   {
     // store depth image
     image_dataset_.insert(std::make_pair(cv_ptrLeft->header.stamp.toSec(),
-                                         cv_ptr_dpt->image));
-    std::cerr << "inserted depth image number: " << ss_dpt.str() << std::endl;
+                                         cv_ptr_dpt->image.clone()));
   }
 
   Update();

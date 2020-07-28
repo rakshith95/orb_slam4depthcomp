@@ -228,21 +228,6 @@ void Node::publishOccupancyGrid()
 
       // process depth image
       mapper.processDepthImage(current_image, pose, global_cloud);
-
-
-      if (!saved_)
-      {
-        cv::imwrite("/home/pal/dpt_img.pgm", it->second);
-        // convert point cloud in pcl format
-        PointCloudType::Ptr cloud(new PointCloudType());
-        occupancy_grid_extractor::convertToPcl(global_cloud, cloud);
-        pcl::io::savePCDFileASCII("/home/pal/test_pcd.pcd", *cloud);
-        std::cerr << "Saved " << cloud->points.size() << " data points to test_pcd.pcd."
-                  << std::endl;
-
-        saved_ = true;
-
-      }
     }
   }
 
@@ -259,10 +244,6 @@ void Node::publishOccupancyGrid()
                                             camera_offset_.getRotation().getY(),
                                             camera_offset_.getRotation().getZ())
                              .toRotationMatrix();
-
-  std::cerr << "Camera offset: " << std::endl;
-  std::cerr << camera_pose.translation().transpose() << std::endl;
-  std::cerr << camera_pose.rotation().transpose() << std::endl;
 
   // transform point cloud in canonical coordinate frame
   mapper.transformCloud(camera_pose, global_cloud);
@@ -532,8 +513,6 @@ void Node::cameraInfoCallback(const sensor_msgs::CameraInfo::ConstPtr& camera_in
   K_ << camera_info_msg->K[0], camera_info_msg->K[1], camera_info_msg->K[2],
       camera_info_msg->K[3], camera_info_msg->K[4], camera_info_msg->K[5],
       camera_info_msg->K[6], camera_info_msg->K[7], camera_info_msg->K[8];
-  ROS_INFO_STREAM("K: \n" << K_);
-
   got_camera_info_ = true;
   camera_info_sub_.shutdown();
 }
