@@ -27,6 +27,7 @@ sensor_msgs
 dynamic_reconfigure
 message_generation
 occupancy_grid_extractor
+angles
 )
 disable_pal_flags()
 
@@ -83,7 +84,7 @@ generate_messages(
 )
 
 catkin_package (
-  CATKIN_DEPENDS roscpp rospy std_msgs cv_bridge image_transport tf sensor_msgs dynamic_reconfigure message_runtime
+  CATKIN_DEPENDS roscpp rospy std_msgs cv_bridge image_transport tf sensor_msgs dynamic_reconfigure message_runtime occupancy_grid_extractor
   LIBRARIES {PROJECT_NAME} libDBoW2 libg2o
 )
 

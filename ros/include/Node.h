@@ -69,7 +69,7 @@
 class Node
 {
 public:
-  typedef std::unordered_map<double, cv::Mat> DoubleCvMatUnorderedMap;
+  typedef std::unordered_map<double, cv_bridge::CvImageConstPtr> DoubleCvMatUnorderedMap;
 
   Node(ORB_SLAM2::System::eSensor sensor, ros::NodeHandle &node_handle,
        image_transport::ImageTransport &image_transport);

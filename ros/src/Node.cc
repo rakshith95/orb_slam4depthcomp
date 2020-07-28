@@ -224,7 +224,7 @@ void Node::publishOccupancyGrid()
     else
     {
       occupancy_grid_extractor::FloatImage current_image;
-      occupancy_grid_extractor::convert_16UC1_to_32FC1(current_image, it->second, depth_scale);
+      occupancy_grid_extractor::convert_16UC1_to_32FC1(current_image, it->second->image, depth_scale);
 
       // process depth image
       mapper.processDepthImage(current_image, pose, global_cloud);
