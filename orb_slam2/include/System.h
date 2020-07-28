@@ -131,6 +131,8 @@ public:
 
     const eSensor& sensor() const {return mSensor;}
 
+    Tracking* tracker(){return mpTracker;}
+
 private:
     bool SetCallStackSize (const rlim_t kNewStackSize);
 

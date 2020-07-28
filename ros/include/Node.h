@@ -73,11 +73,10 @@ class Node
     bool publish_pose_param_;
     int min_observations_per_point_;
 
-    std::vector<std::pair<double, std::string>> dpt_dataset_;
-
   private:
     void PublishMapPoints (std::vector<ORB_SLAM2::MapPoint*> map_points);
     void PublishPositionAsTransform (cv::Mat position);
+    void PublishRobotPose(cv::Mat position);
     void PublishPositionAsPoseStamped(cv::Mat position);
     void PublishRenderedImage (cv::Mat image);
     void ParamsChangedCallback(orb_slam2_ros::dynamic_reconfigureConfig &config, uint32_t level);
@@ -97,13 +96,14 @@ class Node
     std::string name_of_node_;
     ros::NodeHandle node_handle_;
 
-
+protected:
     // pal stuff
     bool first_ = true;
     bool got_tf_ = false;
 
     tf::TransformListener listener_;
-    tf::StampedTransform last_odom_pose_;
+    tf::StampedTransform odom_tf_;
+    tf::StampedTransform last_odom_tf_;
     tf::StampedTransform camera_pose_;
     tf::Transform last_corrected_pose_;
 
@@ -117,19 +117,23 @@ class Node
     std::string corrected_map_frame_id_;
 
     std::string storage_path_;
+    std::vector<std::pair<double, std::string>> dpt_dataset_;
 
     double minimum_travel_distance_;
     double minimum_travel_heading_;
 
     double transform_tolerance_;
 
-    bool hasMovedEnough(const tf::Transform& odom_tf)
+    bool hasMovedEnough()
     {
-      double travel_distance = (odom_tf.getOrigin() - last_odom_pose_.getOrigin()).length();
-      double travel_heading = angles::shortest_angular_distance(tf::getYaw(odom_tf.getRotation()),
-                                                                tf::getYaw(last_odom_pose_.getRotation()));
+      double travel_distance = (odom_tf_.getOrigin() - last_odom_tf_.getOrigin()).length();
+      double travel_heading = angles::shortest_angular_distance(tf::getYaw(odom_tf_.getRotation()),
+                                                                tf::getYaw(last_odom_tf_.getRotation()));
       return (travel_distance > minimum_travel_distance_ || travel_heading > minimum_travel_heading_);
     }
+
+    ros::Subscriber pose_sub_;
+    void poseCallback(const geometry_msgs::PoseWithCovarianceStamped::ConstPtr& msg);
 };
 
 #endif //ORBSLAM2_ROS_NODE_H_

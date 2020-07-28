@@ -77,6 +77,19 @@ void StereoNode::ImageCallback(const sensor_msgs::ImageConstPtr& msgLeft,
     return;
   }
 
+  // get odom
+  try
+  {
+    listener_.lookupTransform(odom_frame_id_, base_footprint_frame_id_, ros::Time(0), odom_tf_);
+  }
+  catch (tf::TransformException ex)
+  {
+    ROS_ERROR("%s", ex.what());
+    ros::Duration(1.0).sleep();
+    return;
+  }
+
+
   current_frame_time_ = msgLeft->header.stamp;
 
   orb_slam_->TrackStereo(cv_ptrLeft->image, cv_ptrRight->image,
