@@ -17,16 +17,17 @@ ENDIF()
 LIST(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/orb_slam2/cmake_modules)
 
 find_package (catkin REQUIRED COMPONENTS
-  roscpp
-  rospy
-  std_msgs
-  cv_bridge
-  image_transport
-  tf
-  sensor_msgs
-  dynamic_reconfigure
-  message_generation
-  angles
+roscpp
+rospy
+std_msgs
+cv_bridge
+image_transport
+tf
+sensor_msgs
+dynamic_reconfigure
+message_generation
+occupancy_grid_extractor
+angles
 )
 disable_pal_flags()
 
@@ -83,18 +84,31 @@ generate_messages(
 )
 
 catkin_package (
-  CATKIN_DEPENDS roscpp rospy std_msgs cv_bridge image_transport tf sensor_msgs dynamic_reconfigure message_runtime
+  CATKIN_DEPENDS roscpp rospy std_msgs cv_bridge image_transport tf sensor_msgs dynamic_reconfigure message_runtime occupancy_grid_extractor
   LIBRARIES {PROJECT_NAME} libDBoW2 libg2o
+)
+
+#include_directories(
+#  SYSTEM
+#  ${PROJECT_SOURCE_DIR}/orb_slam2
+#  ${PROJECT_SOURCE_DIR}/orb_slam2/include
+#  ${PROJECT_SOURCE_DIR}/ros/include
+#  ${EIGEN3_INCLUDE_DIR}
+#  ${catkin_INCLUDE_DIRS}
+#)
+
+include_directories(
+  ${PROJECT_SOURCE_DIR}/orb_slam2
+  ${PROJECT_SOURCE_DIR}/orb_slam2/include
+  ${PROJECT_SOURCE_DIR}/ros/include
 )
 
 include_directories(
   SYSTEM
-  ${PROJECT_SOURCE_DIR}/orb_slam2
-  ${PROJECT_SOURCE_DIR}/orb_slam2/include
-  ${PROJECT_SOURCE_DIR}/ros/include
   ${EIGEN3_INCLUDE_DIR}
   ${catkin_INCLUDE_DIRS}
 )
+
 
 include(${PROJECT_SOURCE_DIR}/orb_slam2/Thirdparty/DBoW2/CMakeLists.txt)
 include(${PROJECT_SOURCE_DIR}/orb_slam2/Thirdparty/g2o/CMakeLists.txt)

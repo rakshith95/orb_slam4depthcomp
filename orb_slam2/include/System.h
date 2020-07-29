@@ -129,9 +129,11 @@ public:
 
     std::vector<MapPoint*> GetAllMapPoints();
 
-    const eSensor& sensor() const {return mSensor;}
+    Map* map() {return mpMap;}
 
-    Tracking* tracker(){return mpTracker;}
+    Tracking* tracker() {return mpTracker;}
+
+    eSensor sensor(){return mSensor;}
 
 private:
     bool SetCallStackSize (const rlim_t kNewStackSize);

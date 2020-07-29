@@ -273,6 +273,7 @@ cv::Mat Tracking::GrabImageMonocular(const cv::Mat& im, const double& timestamp)
 
 void Tracking::Track()
 {
+  created_new_key_frame_ = false;
   if (mState == NO_IMAGES_YET)
   {
     mState = NOT_INITIALIZED;
@@ -469,7 +470,10 @@ void Tracking::Track()
 
       // Check if we need to insert a new keyframe
       if (NeedNewKeyFrame())
+      {
         CreateNewKeyFrame();
+        created_new_key_frame_ = true;
+      }
 
       // We allow points with high innovation (considererd outliers by the Huber Function)
       // pass to the new keyframe, so that bundle adjustment will finally decide
