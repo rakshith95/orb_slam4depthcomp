@@ -2,6 +2,27 @@
 Changelog for package orb_slam2_ros
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Merge branch 'map-publishing' into 'dubnium-devel'
+  Map publishing
+  See merge request ros-overlays/orb_slam_2_ros!10
+* improved performance by using shared_ptr to cv::Mat
+* bug was in cv::Mat copying, now fixed with clone()
+* addressing remarkable bug
+* added changes for going multithreaded
+* implemented publishOccupancyGrid method
+* disabling pal flags + applying beautifier
+* Merge branch 'localization-handling' into 'dubnium-devel'
+  Localization handling
+  See merge request ros-overlays/orb_slam_2_ros!9
+* cosmetics
+* added pose subscriber to initialpose topic
+* code clean up
+* adding changes to handle mislocalization events
+* getting odometry from images callback
+* Contributors: Federico Nardi, federiconardi
+
 2.0.3 (2020-06-23)
 ------------------
 * Merge branch 'stereo-slam' into 'dubnium-devel'
