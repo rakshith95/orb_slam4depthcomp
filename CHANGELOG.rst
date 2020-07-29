@@ -2,8 +2,8 @@
 Changelog for package orb_slam2_ros
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+2.1.0 (2020-07-29)
+------------------
 * Merge branch 'map-publishing' into 'dubnium-devel'
   Map publishing
   See merge request ros-overlays/orb_slam_2_ros!10
