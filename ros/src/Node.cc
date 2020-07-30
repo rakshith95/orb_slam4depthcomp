@@ -111,9 +111,9 @@ Node::Node(ORB_SLAM2::System::eSensor sensor, ros::NodeHandle& node_handle,
   // occupancy_grid publisher
   occupancy_grid_pub_ = node_handle_.advertise<nav_msgs::OccupancyGrid>("/map", 1);
 
-  float min_distance = 0.35f;
-  float max_distance = 1.85f;
-  float merging_distance = 0.05f;
+  float min_distance = 0.2f;
+  float max_distance = 2.0f;
+  float merging_distance = 0.025f;
   double voxel_grid_resolution = 0.025;
 
   mapper_ = occupancy_grid_extractor::Mapper3d(min_distance, max_distance,
@@ -172,12 +172,11 @@ void Node::Update()
     boost::recursive_mutex::scoped_lock lock(lock_);
     if (running_)
     {
-      pending_future_.wait();
       killed_ = true;
     }
     else
     {
-      pending_future_ = std::async(std::launch::async, &Node::publishOccupancyGrid, this);
+      std::async(std::launch::async, &Node::publishOccupancyGrid, this);
     }
   }
 }
@@ -204,20 +203,22 @@ void Node::publishOccupancyGrid()
     return;
   }
 
-  if (orb_slam_->MapChanged())
+  // map has been optimized due to loop closure detected
+  bool hold = orb_slam_->loopCloser()->map_updated_;
+  if (orb_slam_->loopCloser()->map_updated_)
   {
     idx_ = 0;
     mapper_.reset();
     global_cloud_.clear();
-    ROS_WARN_STREAM("Map Changed: building occupancy grid from scratch!!!");
+    ROS_WARN_STREAM("Map updated: building occupancy grid from scratch!!!");
+    orb_slam_->loopCloser()->map_updated_ = false;
   }
 
   // assemble global cloud
   for (size_t i = idx_; i < vpKFs.size(); i++)
   {
-    if (killed_)
+    if (killed_ && !hold)
     {
-      boost::recursive_mutex::scoped_lock lock(lock_);
       running_ = false;
       killed_ = false;
       idx_ = i;
@@ -291,6 +292,7 @@ void Node::publishOccupancyGrid()
   occupancy_grid_pub_.publish(occupancy_grid);
 
   running_ = false;
+  killed_ = false;
 }
 
 void Node::PublishMapPoints(std::vector<ORB_SLAM2::MapPoint*> map_points)

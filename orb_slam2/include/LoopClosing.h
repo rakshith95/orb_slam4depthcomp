@@ -82,6 +82,8 @@ public:
 
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
+    bool map_updated_ = false;
+
 protected:
 
     bool CheckNewKeyFrames();

@@ -117,7 +117,7 @@ void StereoNode::ImageCallback(const sensor_msgs::ImageConstPtr& msgLeft,
   Update();
 
   // save depth image only when in mapping mode
-  if (!load_map_param_)
+  if (!load_map_param_ && orb_slam_->tracker()->created_new_key_frame_)
   {
 
     cv::imwrite(ss_dpt.str(), cv_ptr_dpt->image);
