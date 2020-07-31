@@ -86,7 +86,7 @@ protected:
   bool got_camera_info_ = false;
   Eigen::Matrix3d K_;
 
-  tf::StampedTransform camera_pose_,camera_offset_;
+  tf::StampedTransform camera_pose_,camera_offset_tf_;
 
   bool load_map_param_;
   std::vector<std::pair<double, std::string>> dpt_dataset_;
@@ -173,6 +173,13 @@ protected:
   bool killed_ = false;
   std::future<void> pending_future_;
   boost::recursive_mutex lock_;
+
+  Eigen::Isometry3d pose_;
+  occupancy_grid_extractor::Vector3dVector global_cloud_;
+
+  int idx_ = 0;
+  Eigen::Isometry3d camera_offset_;
+  occupancy_grid_extractor::Mapper3d mapper_;
 };
 
 #endif  // ORBSLAM2_ROS_NODE_H_

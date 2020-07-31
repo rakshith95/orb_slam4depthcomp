@@ -135,6 +135,8 @@ public:
 
     eSensor sensor(){return mSensor;}
 
+    LoopClosing* loopCloser(){return mpLoopCloser;}
+
 private:
     bool SetCallStackSize (const rlim_t kNewStackSize);
 
