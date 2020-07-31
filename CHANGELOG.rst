@@ -2,6 +2,15 @@
 Changelog for package orb_slam2_ros
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Merge branch 'dev-2' into 'dubnium-devel'
+  Dev 2
+  See merge request ros-overlays/orb_slam_2_ros!11
+* storing image only on keyframe added + better map update detection
+* avoiding redundant iterations
+* Contributors: Federico Nardi, federiconardi
+
 2.1.0 (2020-07-29)
 ------------------
 * Merge branch 'map-publishing' into 'dubnium-devel'
