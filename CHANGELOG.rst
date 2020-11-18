@@ -2,6 +2,14 @@
 Changelog for package orb_slam2_ros
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Merge branch 'release' into 'dubnium-devel'
+  removed utils library
+  See merge request ros-overlays/orb_slam_2_ros!12
+* removed utils library
+* Contributors: Federico Nardi, federiconardi
+
 2.1.1 (2020-07-31)
 ------------------
 * Merge branch 'dev-2' into 'dubnium-devel'
