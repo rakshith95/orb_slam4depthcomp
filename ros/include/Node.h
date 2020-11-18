@@ -50,7 +50,6 @@
 #include "Converter.h"
 
 #include <occupancy_grid_extractor/types.h>
-#include <occupancy_grid_extractor/utils.h>
 #include <occupancy_grid_extractor/mapper_3d.h>
 #include <occupancy_grid_extractor/occupancy_grid_extractor.h>
 
