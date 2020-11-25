@@ -14,6 +14,7 @@
 #include <sensor_msgs/image_encodings.h>
 #include <opencv2/core/core.hpp>
 #include <tf/transform_broadcaster.h>
+#include <std_msgs/Bool.h>
 
 #include "System.h"
 #include "Node.h"
@@ -37,4 +38,6 @@ private:
   message_filters::Subscriber<sensor_msgs::Image> *right_sub_;
   message_filters::Subscriber<sensor_msgs::Image> *depth_sub_;
   message_filters::Synchronizer<sync_pol> *sync_;
+
+  ros::Publisher state_pub_;
 };
