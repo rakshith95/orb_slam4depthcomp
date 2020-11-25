@@ -2,6 +2,15 @@
 Changelog for package orb_slam2_ros
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Merge branch 'feature-1' into 'dubnium-devel'
+  Feature 1
+  See merge request ros-overlays/orb_slam_2_ros!13
+* also added publisher of localization state
+* printing on log when track is lost
+* Contributors: Federico Nardi, federiconardi
+
 2.1.2 (2020-11-18)
 ------------------
 * Merge branch 'release' into 'dubnium-devel'
