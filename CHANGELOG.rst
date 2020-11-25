@@ -2,8 +2,8 @@
 Changelog for package orb_slam2_ros
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+2.1.3 (2020-11-25)
+------------------
 * Merge branch 'feature-1' into 'dubnium-devel'
   Feature 1
   See merge request ros-overlays/orb_slam_2_ros!13
