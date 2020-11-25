@@ -40,6 +40,8 @@ StereoNode::StereoNode(const ORB_SLAM2::System::eSensor sensor, ros::NodeHandle&
   sync_ = new message_filters::Synchronizer<sync_pol>(sync_pol(10), *left_sub_,
                                                       *right_sub_, *depth_sub_);
   sync_->registerCallback(boost::bind(&StereoNode::ImageCallback, this, _1, _2, _3));
+
+  state_pub_ = node_handle.advertise<std_msgs::Bool>(name_of_node_ + "/localized", 1);
 }
 
 
@@ -110,8 +112,7 @@ void StereoNode::ImageCallback(const sensor_msgs::ImageConstPtr& msgLeft,
   if (orb_slam_->tracker()->created_new_key_frame_)
   {
     // store depth image
-    image_dataset_.insert(std::make_pair(cv_ptrLeft->header.stamp.toSec(),
-                                         cv_ptr_dpt));
+    image_dataset_.insert(std::make_pair(cv_ptrLeft->header.stamp.toSec(), cv_ptr_dpt));
   }
 
   Update();
@@ -119,9 +120,21 @@ void StereoNode::ImageCallback(const sensor_msgs::ImageConstPtr& msgLeft,
   // save depth image only when in mapping mode
   if (!load_map_param_ && orb_slam_->tracker()->created_new_key_frame_)
   {
-
     cv::imwrite(ss_dpt.str(), cv_ptr_dpt->image);
 
     dpt_dataset_.push_back(std::make_pair(cv_ptrLeft->header.stamp.toSec(), ss_dpt.str()));
+  }
+
+  // if lost, print on output
+  if (load_map_param_)
+  {
+    std_msgs::Bool localized;
+    localized.data = true;
+    if (orb_slam_->tracker()->state() == ORB_SLAM2::Tracking::LOST)
+    {
+      localized.data = false;
+      ROS_INFO_STREAM_THROTTLE(2, "Track lost!!!");
+    }
+    state_pub_.publish(localized);
   }
 }

@@ -94,6 +94,8 @@ protected:
   std::string base_footprint_frame_id_ = "base_footprint";
   std::string robot_camera_frame_id_ = "torso_front_camera_depth_optical_frame";
 
+  std::string name_of_node_;
+
 private:
   void publishOccupancyGrid();
   void PublishMapPoints(std::vector<ORB_SLAM2::MapPoint *> map_points);
@@ -117,7 +119,6 @@ private:
 
   ros::ServiceServer service_server_;
 
-  std::string name_of_node_;
   ros::NodeHandle node_handle_;
 
   std::string map_frame_id_param_;
