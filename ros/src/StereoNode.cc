@@ -110,8 +110,13 @@ void StereoNode::ImageCallback(const sensor_msgs::ImageConstPtr& msgLeft,
   if (orb_slam_->tracker()->created_new_key_frame_)
   {
     // store depth image
-    image_dataset_.insert(std::make_pair(cv_ptrLeft->header.stamp.toSec(),
-                                         cv_ptr_dpt));
+    image_dataset_.insert(std::make_pair(cv_ptrLeft->header.stamp.toSec(), cv_ptr_dpt));
+  }
+
+  // if lost, print on output
+  if (orb_slam_->tracker()->state() == ORB_SLAM2::Tracking::LOST)
+  {
+    ROS_INFO_STREAM_THROTTLE(2, "Track lost!!!");
   }
 
   Update();
@@ -119,7 +124,6 @@ void StereoNode::ImageCallback(const sensor_msgs::ImageConstPtr& msgLeft,
   // save depth image only when in mapping mode
   if (!load_map_param_ && orb_slam_->tracker()->created_new_key_frame_)
   {
-
     cv::imwrite(ss_dpt.str(), cv_ptr_dpt->image);
 
     dpt_dataset_.push_back(std::make_pair(cv_ptrLeft->header.stamp.toSec(), ss_dpt.str()));
