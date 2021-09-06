@@ -1,3 +1,10 @@
+# NOTES FOR GALLIUM
+Branched off dubnium and added comptability for:
+- opencv 4
+- latest version of PCL that requires c++14
+
+Ideally we would want to pick all the latest changes from upstream and rebase our changes on top of those.
+
 # ORB-SLAM2
 **ORB-SLAM2 Authors:** [Raul Mur-Artal](http://webdiis.unizar.es/~raulmur/), [Juan D. Tardos](http://webdiis.unizar.es/~jdtardos/), [J. M. M. Montiel](http://webdiis.unizar.es/~josemari/) and [Dorian Galvez-Lopez](http://doriangalvez.com/) ([DBoW2](https://github.com/dorian3d/DBoW2)).
 The original implementation can be found [here](https://github.com/raulmur/ORB_SLAM2.git).
