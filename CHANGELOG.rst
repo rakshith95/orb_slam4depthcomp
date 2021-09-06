@@ -2,8 +2,8 @@
 Changelog for package orb_slam2_ros
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+3.0.0 (2021-09-06)
+------------------
 * Use c++14 instead of c++11
 * building on jetson nano
 * Contributors: Alden Parker, Jordan Palacios
