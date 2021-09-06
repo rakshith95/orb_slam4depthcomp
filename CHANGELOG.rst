@@ -2,6 +2,12 @@
 Changelog for package orb_slam2_ros
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Use c++14 instead of c++11
+* building on jetson nano
+* Contributors: Alden Parker, Jordan Palacios
+
 2.1.3 (2020-11-25)
 ------------------
 * Merge branch 'feature-1' into 'dubnium-devel'
