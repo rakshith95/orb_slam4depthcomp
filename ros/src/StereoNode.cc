@@ -95,7 +95,7 @@ void StereoNode::ImageCallback(const sensor_msgs::ImageConstPtr& msgLeft,
   // get odom
   try
   {
-    listener_.lookupTransform(odom_frame_id_, base_footprint_frame_id_, ros::Time(0), odom_tf_);
+    listener_.lookupTransform(base_footprint_frame_id_, robot_camera_frame_id_, ros::Time(0), odom_tf_);
   }
   catch (tf::TransformException ex)
   {

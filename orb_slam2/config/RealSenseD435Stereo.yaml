@@ -1,10 +1,10 @@
 %YAML:1.0
 
 # Camera calibration and distortion parameters (OpenCV)
-Camera.fx: 425.7753601074219
-Camera.fy: 422.241943359375
-Camera.cx: 425.7753601074219
-Camera.cy: 242.7037811279297
+Camera.fx: 379.8149719238281
+Camera.fy: 379.8149719238281
+Camera.cx: 322.720947265625
+Camera.cy: 239.53643798828125
 
 # Camera distortion parameters (OpenCV)
 Camera.k1: 0.0
@@ -17,10 +17,10 @@ Camera.width: 640
 Camera.height: 480
 
 # IR projector baseline times fx (aprox.)
-Camera.bf: 19.16
+Camera.bf: 19.006
 
 # Camera frames per second
-Camera.fps: 30.0
+Camera.fps: 60.0
 
 # Color order of the images (0: BGR, 1: RGB. It is ignored if images are grayscale)
 Camera.RGB: 1

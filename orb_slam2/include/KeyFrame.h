@@ -45,7 +45,8 @@ class KeyFrame
 {
 public:
     KeyFrame(Frame &F, Map* pMap, KeyFrameDatabase* pKFDB);
-
+    cv::Mat rgb_image;
+    cv::Mat raw_depth_image; 
     // Pose functions
     void SetPose(const cv::Mat &Tcw);
     cv::Mat GetPose();

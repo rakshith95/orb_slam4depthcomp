@@ -43,20 +43,21 @@
 #include <message_filters/sync_policies/approximate_time.h>
 #include <sensor_msgs/image_encodings.h>
 #include <sensor_msgs/PointCloud2.h>
+#include <geometry_msgs/PoseWithCovarianceStamped.h>
 #include <geometry_msgs/PoseStamped.h>
 #include <sensor_msgs/CameraInfo.h>
 
 #include "System.h"
 #include "Converter.h"
 
-#include <occupancy_grid_extractor/types.h>
-#include <occupancy_grid_extractor/mapper_3d.h>
-#include <occupancy_grid_extractor/occupancy_grid_extractor.h>
+// #include <occupancy_grid_extractor/types.h>
+// #include <occupancy_grid_extractor/mapper_3d.h>
+// #include <occupancy_grid_extractor/occupancy_grid_extractor.h>
 
 #include <nav_msgs/OccupancyGrid.h>
-#include <navigation_utils/offline_tools.h>
-#include <pal_map_utils/MapImgUtils.h>
-#include <pal_map_utils/MapSaveUtils.h>
+// #include <navigation_utils/offline_tools.h>
+// #include <pal_map_utils/MapImgUtils.h>
+// #include <pal_map_utils/MapSaveUtils.h>
 
 #include <Eigen/Geometry>
 #include <tf/transform_listener.h>
@@ -91,8 +92,8 @@ protected:
   std::vector<std::pair<double, std::string>> dpt_dataset_;
 
   tf::TransformListener listener_;
-  std::string base_footprint_frame_id_ = "base_footprint";
-  std::string robot_camera_frame_id_ = "torso_front_camera_depth_optical_frame";
+  std::string base_footprint_frame_id_ = "camera_link";
+  std::string robot_camera_frame_id_ = "camera_depth_optical_frame";
 
   std::string name_of_node_;
 
@@ -175,11 +176,11 @@ protected:
   boost::recursive_mutex lock_;
 
   Eigen::Isometry3d pose_;
-  occupancy_grid_extractor::Vector3dVector global_cloud_;
+  // occupancy_grid_extractor::Vector3dVector global_cloud_;
 
   int idx_ = 0;
   Eigen::Isometry3d camera_offset_;
-  occupancy_grid_extractor::Mapper3d mapper_;
+  // occupancy_grid_extractor::Mapper3d mapper_;
 };
 
 #endif  // ORBSLAM2_ROS_NODE_H_

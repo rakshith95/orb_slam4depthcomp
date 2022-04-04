@@ -116,8 +116,8 @@ Node::Node(ORB_SLAM2::System::eSensor sensor, ros::NodeHandle& node_handle,
   float merging_distance = 0.025f;
   double voxel_grid_resolution = 0.025;
 
-  mapper_ = occupancy_grid_extractor::Mapper3d(min_distance, max_distance,
-                                               merging_distance, voxel_grid_resolution);
+  // mapper_ = occupancy_grid_extractor::Mapper3d(min_distance, max_distance,
+                                              //  merging_distance, voxel_grid_resolution);
 
 
 
@@ -139,7 +139,8 @@ Node::~Node()
 void Node::Update()
 {
   cv::Mat position = orb_slam_->GetCurrentPosition();
-
+  if (position.empty())
+    return;
   if (!correct_global_frame_)  // old behavior
   {
     PublishPositionAsTransform(position);
@@ -179,6 +180,7 @@ void Node::Update()
       std::async(std::launch::async, &Node::publishOccupancyGrid, this);
     }
   }
+
 }
 
 void Node::publishOccupancyGrid()
@@ -208,8 +210,8 @@ void Node::publishOccupancyGrid()
   if (orb_slam_->loopCloser()->map_updated_)
   {
     idx_ = 0;
-    mapper_.reset();
-    global_cloud_.clear();
+    // mapper_.reset();
+    // global_cloud_.clear();
     ROS_WARN_STREAM("Map updated: building occupancy grid from scratch!!!");
     orb_slam_->loopCloser()->map_updated_ = false;
   }
@@ -248,44 +250,44 @@ void Node::publishOccupancyGrid()
     }
     else
     {
-      occupancy_grid_extractor::FloatImage current_image;
-      occupancy_grid_extractor::convert_16UC1_to_32FC1(current_image, it->second->image,
-                                                       depth_scale);
+      // occupancy_grid_extractor::FloatImage current_image;
+      // occupancy_grid_extractor::convert_16UC1_to_32FC1(current_image, it->second->image,
+                                                      //  depth_scale);
 
       // process depth image
-      mapper_.processDepthImage(current_image, pose_, global_cloud_);
+      // mapper_.processDepthImage(current_image, pose_, global_cloud_);
     }
   }
 
   idx_ = vpKFs.size();
 
-  occupancy_grid_extractor::Vector3dVector temp_cloud = global_cloud_;
+  // occupancy_grid_extractor::Vector3dVector temp_cloud = global_cloud_;
 
   // transform point cloud in global coordinate frame
-  mapper_.transformCloud(pose_, temp_cloud);
+  // mapper_.transformCloud(pose_, temp_cloud);
 
   // transform point cloud in canonical coordinate frame
-  mapper_.transformCloud(camera_offset_, temp_cloud);
+  // mapper_.transformCloud(camera_offset_, temp_cloud);
 
   // build occupancy grid
-  navigation_utils::DenseGrid grid;
-  occupancy_grid_extractor::OccupancyGridExtractor extractor(occupancy_grid_resolution);
-  extractor.compute(temp_cloud, grid);
+  // navigation_utils::DenseGrid grid;
+  // occupancy_grid_extractor::OccupancyGridExtractor extractor(occupancy_grid_resolution);
+  // extractor.compute(temp_cloud, grid);
 
   // convert grid to cv mat
-  cv::Mat occupancy_img = navigation_utils::drawIndexImage(grid);
+  // cv::Mat occupancy_img = navigation_utils::drawIndexImage(grid);
 
   // create occupancy grid
   nav_msgs::OccupancyGrid occupancy_grid;
-  pal_map_utils::cvMat2occGrid(occupancy_img, occupancy_grid);
+  // pal_map_utils::cvMat2occGrid(occupancy_img, occupancy_grid);
 
   // set resolution
-  occupancy_grid.info.resolution = grid.resolution();
+  // occupancy_grid.info.resolution = grid.resolution();
 
   // set origin
   tf::Transform map_origin;
   map_origin.setIdentity();
-  map_origin.setOrigin(tf::Vector3(grid.originX(), grid.originY(), 0));
+  // map_origin.setOrigin(tf::Vector3(grid.originX(), grid.originY(), 0));
   tf::poseTFToMsg(map_origin, occupancy_grid.info.origin);
 
   // publish map
@@ -534,6 +536,6 @@ void Node::cameraInfoCallback(const sensor_msgs::CameraInfo::ConstPtr& camera_in
       camera_info_msg->K[3], camera_info_msg->K[4], camera_info_msg->K[5],
       camera_info_msg->K[6], camera_info_msg->K[7], camera_info_msg->K[8];
   got_camera_info_ = true;
-  mapper_.setK(K_);
+  // mapper_.setK(K_);
   camera_info_sub_.shutdown();
 }

@@ -24,7 +24,10 @@
 #include "Converter.h"
 #include <thread>
 #include <iomanip>
+#include <cmath>
+#include <boost/filesystem.hpp>
 
+float REPROJ_ERR_THRESH=5;
 namespace ORB_SLAM2
 {
 
@@ -584,7 +587,8 @@ void System::EnableLocalizationOnly (bool localize_only) {
 
 
 // map serialization addition
-bool System::SaveMap(const string &filename) {
+bool System::SaveMap(const string &filename) 
+{
     unique_lock<mutex>MapPointGlobal(MapPoint::mGlobalMutex);
     std::ofstream out(filename, std::ios_base::binary);
     if (!out) {
@@ -611,12 +615,144 @@ bool System::SaveMap(const string &filename) {
         SetCallStackSize(kDefaultCallStackSize);
         return false;
     } catch (...) {
-        std::cerr << "Unknows exeption" << std::endl;
+        std::cerr << "Unknown exeption" << std::endl;
         SetCallStackSize(kDefaultCallStackSize);
         return false;
     }
 
     SetCallStackSize(kDefaultCallStackSize);
+
+    std::vector<KeyFrame*> vpKFs = mpMap->GetAllKeyFrames();
+    sort(vpKFs.begin(),vpKFs.end(),KeyFrame::lId);
+
+    std::vector<MapPoint*> mps = mpMap->GetAllMapPoints();
+    std::vector< std::vector<float> > kf_depths(vpKFs.size());
+    std::vector<std::vector<cv::Point2f> > kf_2Dkeypoints(vpKFs.size());
+    cv::Mat intrinsics = cv::Mat::zeros(3,4,CV_32F);
+
+    for (size_t i=0; i<mps.size(); i++)
+    {
+        cv::Mat worldpos = mps[i]->GetWorldPos();
+        // std::vector<float> worldPosvec {worldpos.at<float>(0,0), worldpos.at<float>(1,0), worldpos.at<float>(2,0)  };
+        
+        for(size_t j=0; j<vpKFs.size(); j++)
+        {
+            KeyFrame* kf = vpKFs[j];
+            MapPoint* mappoint = mps[i];
+            if(!mappoint->IsInKeyFrame(kf))
+                continue;
+
+            // const std::vector<float> depths = kf-> mvDepth;
+            const std::vector<cv::KeyPoint> twoD_keypoints = kf->mvKeysUn;
+
+            const float fx = kf->fx;
+            const float fy = kf->fy;
+            const float cx = kf->cx;
+            const float cy = kf->cy;
+
+            intrinsics.at<float>(0,0) = fx;
+            intrinsics.at<float>(1,1) = fy;
+            intrinsics.at<float>(0,2) = cx;
+            intrinsics.at<float>(1,2) = cy;
+            intrinsics.at<float>(2,2) = 1;
+
+            int ind = mappoint->GetIndexInKeyFrame(kf);
+            cv::KeyPoint twoD_keypoint = twoD_keypoints[ind];
+
+            cv::Mat keyframePose_cameraFrame = kf->GetPose();
+            // Reproject and check accuracy
+            cv::Mat to_append = cv::Mat::ones(1,1,CV_32F);
+            if (worldpos.rows<4)
+                worldpos.push_back(to_append);
+            cv::Mat pt_cam = keyframePose_cameraFrame*worldpos;
+            cv::Mat reproj_point = intrinsics*pt_cam;
+            cv::Point2f pt = twoD_keypoint.pt;
+            float reproj_x = reproj_point.at<float>(0,0)/reproj_point.at<float>(2,0);
+            float reproj_y = reproj_point.at<float>(1,0)/reproj_point.at<float>(2,0);
+
+            float reproj_err = sqrt((reproj_x - pt.x)*(reproj_x - pt.x) + (reproj_y - pt.y)*(reproj_y - pt.y));
+            if (reproj_err>REPROJ_ERR_THRESH)
+                continue;
+
+            // Otherwise continue to saving keyframe, sparse depth, pose (camera frame) data 
+            float depth = pt_cam.at<float>(2,0)/pt_cam.at<float>(3,0);
+            kf_depths[j].push_back(depth);
+            kf_2Dkeypoints[j].push_back(pt);            
+        }
+    }   
+
+    // Save  rgb image, depth image, pose
+    std::string save_path = "/home/rakshith/orb_slam_data";
+        
+    if(!boost::filesystem::is_directory( save_path ))
+        boost::filesystem::create_directory(save_path);
+    if(!boost::filesystem::is_directory( save_path+"/images" ))
+        boost::filesystem::create_directory(save_path+"/images");
+    if(!boost::filesystem::is_directory( save_path+"/poses" ))
+        boost::filesystem::create_directory(save_path+"/poses");
+    if(!boost::filesystem::is_directory( save_path+"/depths" ))
+        boost::filesystem::create_directory(save_path+"/depths");
+    if(!boost::filesystem::is_directory( save_path+"/raw_depths" ))
+        boost::filesystem::create_directory(save_path+"/raw_depths");
+
+    // Save intrinsics
+    cv::FileStorage fs(save_path+"/intrinsics.yml", cv::FileStorage::WRITE);
+    fs << "camera_intrinsics" << intrinsics;
+    fs.release();
+
+
+    std::string sparse_depth_file, raw_depth_file, image_file, pose_file;
+
+    for(size_t i=0; i<vpKFs.size(); i++)
+    {
+        sparse_depth_file = save_path;
+        raw_depth_file = save_path;
+        image_file = save_path;
+        pose_file = save_path;
+
+        // Save color image
+        cv::Mat img = vpKFs[i]->rgb_image;
+        cv::cvtColor(img, img, cv::COLOR_RGB2BGR); //imwrite default is bgr
+        image_file.append("/images/keyframeP.png");
+        size_t l = image_file.length();
+        image_file.replace(l-5,1,std::to_string(i));
+        cv::imwrite(image_file, img);
+
+        // Save raw depth Image
+        cv::Mat raw_depth_img = vpKFs[i]->raw_depth_image;
+        // cv::cvtColor(img, img, cv::COLOR_RGB2BGR); //imwrite default is bgr
+        raw_depth_file.append("/raw_depths/rawDepthP.png");
+        l = raw_depth_file.length();
+        raw_depth_file.replace(l-5,1,std::to_string(i));
+        cv::imwrite(raw_depth_file, raw_depth_img);
+
+
+        // Save sparse depth Image
+        cv::Mat depth_img = cv::Mat::zeros(img.rows, img.cols, CV_32F);
+        std::vector<cv::Point2f> twoD_pts = kf_2Dkeypoints[i]; 
+        std::vector<float> depths = kf_depths[i];
+
+        for(size_t j=0; j<twoD_pts.size(); j++)
+        {
+            cv::Point2f pt = twoD_pts[j];
+            depth_img.at<float>(pt.y, pt.x) = depths[j];
+        }
+        sparse_depth_file.append("/depths/depthP.png");
+        l = sparse_depth_file.length();
+        sparse_depth_file.replace(l-5,1,std::to_string(i));
+        cv::imwrite(sparse_depth_file, depth_img);
+        
+        // Save pose in camera frame
+        cv::Mat pose_camFrame = vpKFs[i]->GetPose();
+        pose_file.append("/poses/poseP.yml");
+        l = pose_file.length();
+        pose_file.replace(l-5,1,std::to_string(i));
+
+        cv::FileStorage fs(pose_file, cv::FileStorage::WRITE);
+        fs << "camera_pose" <<pose_camFrame;
+        fs.release();
+    }
+        
     return true;
 }
 

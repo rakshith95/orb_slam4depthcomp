@@ -26,10 +26,10 @@ tf
 sensor_msgs
 dynamic_reconfigure
 message_generation
-occupancy_grid_extractor
+# occupancy_grid_extractor
 angles
 )
-disable_pal_flags()
+# disable_pal_flags()
 
 find_package(OpenCV 4.0 QUIET)
 if(NOT OpenCV_FOUND)
