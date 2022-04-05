@@ -46,12 +46,17 @@ class RGBDNode : public Node
     RGBDNode (const ORB_SLAM2::System::eSensor sensor, ros::NodeHandle &node_handle, image_transport::ImageTransport &image_transport);
     ~RGBDNode ();
     void ImageCallback (const sensor_msgs::ImageConstPtr& msgRGB,const sensor_msgs::ImageConstPtr& msgD);
+    void CompressedImageRawDepthCallback (const sensor_msgs::CompressedImageConstPtr& msgRGB,const sensor_msgs::ImageConstPtr& msgD);
+    // void CompressedImageCompressedDepthCallback (const sensor_msgs::CompressedImage::ConstPtr& msgRGB,const sensor_msgs::CompressedImage::ConstPtr& msgD);
 
   private:
     typedef message_filters::sync_policies::ApproximateTime<sensor_msgs::Image, sensor_msgs::Image> sync_pol;
+    typedef message_filters::sync_policies::ApproximateTime<sensor_msgs::CompressedImage, sensor_msgs::Image> comp_sync_pol;
     message_filters::Subscriber<sensor_msgs::Image> *rgb_subscriber_;
+    message_filters::Subscriber<sensor_msgs::CompressedImage> *compressed_rgb_subscriber_;
     message_filters::Subscriber<sensor_msgs::Image> *depth_subscriber_;
     message_filters::Synchronizer<sync_pol> *sync_;
+    message_filters::Synchronizer<comp_sync_pol> *sync_compressed_;
 };
 
 #endif //ORBSLAM2_ROS_RGBDODE_H_

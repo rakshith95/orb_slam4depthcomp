@@ -10,6 +10,7 @@ Node::Node(ORB_SLAM2::System::eSensor sensor, ros::NodeHandle& node_handle,
   min_observations_per_point_ = 2;
 
   // static parameters
+  node_handle_.param(name_of_node_ + "/is_compressed", is_compressed_param_, false);
   node_handle_.param(name_of_node_ + "/publish_pointcloud", publish_pointcloud_param_, true);
   node_handle_.param(name_of_node_ + "/publish_pose", publish_pose_param_, true);
   node_handle_.param<std::string>(name_of_node_ + "/pointcloud_frame_id",

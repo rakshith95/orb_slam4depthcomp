@@ -16,7 +16,7 @@
 * GNU General Public License for more details.
 *
 * You should have received a copy of the GNU General Public License
-* along with ORB-SLAM2. If not, see <http://www.gnu.org/licenses/>.
+* along with ORB-SLAM2. If not, see <http://www.gnu.orgb_su/licenses/>.
 */
 
 #ifndef ORBSLAM2_ROS_NODE_H_
@@ -96,6 +96,7 @@ protected:
   std::string robot_camera_frame_id_ = "camera_depth_optical_frame";
 
   std::string name_of_node_;
+  bool is_compressed_param_;
 
 private:
   void publishOccupancyGrid();
