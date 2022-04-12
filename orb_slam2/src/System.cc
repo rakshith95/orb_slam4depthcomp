@@ -694,6 +694,8 @@ bool System::SaveMap(const string &filename)
         boost::filesystem::create_directory(save_path+"/depths");
     if(!boost::filesystem::is_directory( save_path+"/raw_depths" ))
         boost::filesystem::create_directory(save_path+"/raw_depths");
+    if(!boost::filesystem::is_directory( save_path+"/validity_maps" ))
+        boost::filesystem::create_directory(save_path+"/validity_maps");
 
     // Save intrinsics
     cv::FileStorage fs(save_path+"/intrinsics.yml", cv::FileStorage::WRITE);
@@ -701,7 +703,7 @@ bool System::SaveMap(const string &filename)
     fs.release();
 
 
-    std::string sparse_depth_file, raw_depth_file, image_file, pose_file;
+    std::string sparse_depth_file, raw_depth_file, image_file, pose_file, validity_map_file;
 
     for(size_t i=0; i<vpKFs.size(); i++)
     {
@@ -709,7 +711,8 @@ bool System::SaveMap(const string &filename)
         raw_depth_file = save_path;
         image_file = save_path;
         pose_file = save_path;
-
+        validity_map_file = save_path;
+        
         // Save color image
         cv::Mat img = vpKFs[i]->rgb_image;
         cv::cvtColor(img, img, cv::COLOR_RGB2BGR); //imwrite default is bgr
@@ -742,6 +745,19 @@ bool System::SaveMap(const string &filename)
         sparse_depth_file.replace(l-5,1,std::to_string(i));
         cv::imwrite(sparse_depth_file, depth_img);
         
+        // Validity Map
+        cv::Mat validity_map = cv::Mat::zeros(depth_img.rows, depth_img.cols, CV_8U);
+        for (size_t i=0;i<depth_img.rows;i++)
+            for(size_t j=0;j<depth_img.cols;j++)
+            {
+                if (depth_img.at<float>(i,j) > 0)
+                    validity_map.at<uchar>(i,j)=1;
+            }
+        validity_map_file.append("/validity_maps/validity_mapP.png");
+        l = validity_map_file.length();
+        validity_map_file.replace(l-5,1,std::to_string(i));
+        cv::imwrite(validity_map_file, validity_map);
+
         // Save pose in camera frame
         cv::Mat pose_camFrame = vpKFs[i]->GetPose();
         pose_file.append("/poses/poseP.yml");
@@ -752,7 +768,7 @@ bool System::SaveMap(const string &filename)
         fs << "camera_pose" <<pose_camFrame;
         fs.release();
     }
-        
+
     return true;
 }
 
