@@ -1,10 +1,10 @@
 %YAML:1.0
 
 # Camera calibration and distortion parameters (OpenCV)
-Camera.fx: 606.4146118164062
-Camera.fy: 606.265380859375
-Camera.cx: 424.6780090332031
-Camera.cy: 246.37075805664062
+Camera.fx: 612.3289794921875
+Camera.fy: 611.8948974609375
+Camera.cx: 426.1895446777344
+Camera.cy: 243.96485900878906
 
 # Camera distortion parameters (OpenCV)
 Camera.k1: 0.0
@@ -20,13 +20,13 @@ Camera.height: 480
 Camera.bf: 9.052
 
 # Camera frames per second
-Camera.fps: 60.0
+Camera.fps: 30.0
 
 # Color order of the images (0: BGR, 1: RGB. It is ignored if images are grayscale)
 Camera.RGB: 1
 
 # Close/Far threshold. Baseline times.
-ThDepth: 40.0
+ThDepth: 60.0
 
 # Deptmap values factor (what pixel value in the depth image corresponds to 1m?)
 DepthMapFactor: 1000.0
@@ -36,7 +36,7 @@ DepthMapFactor: 1000.0
 #--------------------------------------------------------------------------------------------
 
 # ORB Extractor: Number of features per image
-ORBextractor.nFeatures: 1000
+ORBextractor.nFeatures: 1200
 
 # ORB Extractor: Scale factor between levels in the scale pyramid
 ORBextractor.scaleFactor: 1.2
@@ -49,4 +49,4 @@ ORBextractor.nLevels: 8
 # Firstly we impose iniThFAST. If no corners are detected we impose a lower value minThFAST
 # You can lower these values if your images have low contrast
 ORBextractor.iniThFAST: 20
-ORBextractor.minThFAST: 7
+ORBextractor.minThFAST: 5

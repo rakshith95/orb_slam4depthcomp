@@ -97,6 +97,7 @@ protected:
 
   std::string name_of_node_;
   bool is_compressed_param_;
+  bool is_OnlyImage_compressed_param_;
 
 private:
   void publishOccupancyGrid();

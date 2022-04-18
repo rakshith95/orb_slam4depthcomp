@@ -727,9 +727,9 @@ bool System::SaveMap(const string &filename)
         raw_depth_file.append("/raw_depths/rawDepthP.yml");
         l = raw_depth_file.length();
         raw_depth_file.replace(l-5,1,std::to_string(i));
-        cv::FileStorage fs(raw_depth_file, cv::FileStorage::WRITE);
-        fs << "Depth" <<raw_depth_img;
-        fs.release();
+        cv::FileStorage fsd(raw_depth_file, cv::FileStorage::WRITE);
+        fsd << "Depth" <<raw_depth_img;
+        fsd.release();
         // cv::imwrite(raw_depth_file, raw_depth_img);
 
         // Save sparse depth Image
@@ -746,9 +746,9 @@ bool System::SaveMap(const string &filename)
         sparse_depth_file.append("/depths/depthP.png");
         l = sparse_depth_file.length();
         sparse_depth_file.replace(l-5,1,std::to_string(i));
-        cv::FileStorage fs(sparse_depth_file, cv::FileStorage::WRITE);
-        fs << "Depth" <<depth_img;
-        fs.release();
+        cv::FileStorage fssd(sparse_depth_file, cv::FileStorage::WRITE);
+        fssd << "Depth" <<depth_img;
+        fssd.release();
         // cv::imwrite(sparse_depth_file, depth_img);
 
         // Validity Map
