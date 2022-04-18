@@ -722,13 +722,15 @@ bool System::SaveMap(const string &filename)
         cv::imwrite(image_file, img);
 
         // Save raw depth Image
-        cv::Mat raw_depth_img = vpKFs[i]->raw_depth_image;
+        cv::Mat raw_depth_img = (vpKFs[i]->raw_depth_image);  
         // cv::cvtColor(img, img, cv::COLOR_RGB2BGR); //imwrite default is bgr
-        raw_depth_file.append("/raw_depths/rawDepthP.png");
+        raw_depth_file.append("/raw_depths/rawDepthP.yml");
         l = raw_depth_file.length();
         raw_depth_file.replace(l-5,1,std::to_string(i));
-        cv::imwrite(raw_depth_file, raw_depth_img);
-
+        cv::FileStorage fs(raw_depth_file, cv::FileStorage::WRITE);
+        fs << "Depth" <<raw_depth_img;
+        fs.release();
+        // cv::imwrite(raw_depth_file, raw_depth_img);
 
         // Save sparse depth Image
         cv::Mat depth_img = cv::Mat::zeros(img.rows, img.cols, CV_32F);
@@ -738,13 +740,17 @@ bool System::SaveMap(const string &filename)
         for(size_t j=0; j<twoD_pts.size(); j++)
         {
             cv::Point2f pt = twoD_pts[j];
-            depth_img.at<float>(pt.y, pt.x) = depths[j];
+            depth_img.at<float>(pt.y, pt.x) = depths[j]; 
         }
+
         sparse_depth_file.append("/depths/depthP.png");
         l = sparse_depth_file.length();
         sparse_depth_file.replace(l-5,1,std::to_string(i));
-        cv::imwrite(sparse_depth_file, depth_img);
-        
+        cv::FileStorage fs(sparse_depth_file, cv::FileStorage::WRITE);
+        fs << "Depth" <<depth_img;
+        fs.release();
+        // cv::imwrite(sparse_depth_file, depth_img);
+
         // Validity Map
         cv::Mat validity_map = cv::Mat::zeros(depth_img.rows, depth_img.cols, CV_8U);
         for (size_t i=0;i<depth_img.rows;i++)
