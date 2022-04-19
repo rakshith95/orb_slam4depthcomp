@@ -743,7 +743,7 @@ bool System::SaveMap(const string &filename)
             depth_img.at<float>(pt.y, pt.x) = depths[j]; 
         }
 
-        sparse_depth_file.append("/depths/depthP.png");
+        sparse_depth_file.append("/depths/depthP.yml");
         l = sparse_depth_file.length();
         sparse_depth_file.replace(l-5,1,std::to_string(i));
         cv::FileStorage fssd(sparse_depth_file, cv::FileStorage::WRITE);
