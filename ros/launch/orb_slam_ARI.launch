@@ -2,13 +2,12 @@
   <node name="orb_slam2_rgbd" pkg="orb_slam2_ros"
       type="orb_slam2_ros_rgbd" output="screen">
 
-       <!-- <remap from="/camera/rgb/image_raw" to="/camera/color/image_raw" /> -->
-       <!-- <remap from="/camera/depth_registered/image_raw" to="/camera/aligned_depth_to_color/image_raw" /> -->
-       <remap from="/camera/rgb/image_raw/compressed" to="/camera/color/image_raw/compressed" />
-       <remap from="/camera/depth_registered/compressed" to="/camera/aligned_depth_to_color/image_raw/compressed" />
+       <remap from="/camera/rgb/image_raw/compressed" to="/torso_front_camera/color/image_raw/compressed" />
+       <remap from="/camera/depth_registered/image_raw" to="/torso_front_camera/aligned_depth_to_color/image_raw" />
+       <remap from="/camera/depth_registered/image_raw/compressed" to="/torso_front_camera/aligned_depth_to_color/image_raw/compressed" />
 
-       <param name="is_both_compressed" type="bool" value="true" />
-       <param name="is_onlyImage_compressed" type="bool" value="false" />
+       <param name="is_both_compressed" type="bool" value="false" />
+       <param name="is_onlyImage_compressed" type="bool" value="true" />
        <param name="publish_pointcloud" type="bool" value="true" />
        <param name="publish_pose" type="bool" value="true" />
        <param name="localize_only" type="bool" value="false" />
@@ -17,7 +16,7 @@
        <!-- static parameters -->
        <param name="load_map" type="bool" value="false" />
        <param name="map_file" type="string" value="map.bin" />
-       <param name="settings_file" type="string" value="$(find orb_slam2_ros)/orb_slam2/config/RealSenseD435RGBD.yaml" />
+       <param name="settings_file" type="string" value="$(find orb_slam2_ros)/orb_slam2/config/RealSenseD435RGBD_ARI12.yaml" />
        <param name="voc_file" type="string" value="$(find orb_slam2_ros)/orb_slam2/Vocabulary/ORBvoc.txt" />
 
        <param name="pointcloud_frame_id" type="string" value="map" />

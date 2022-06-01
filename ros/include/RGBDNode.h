@@ -31,6 +31,7 @@
 #include <message_filters/time_synchronizer.h>
 #include <message_filters/sync_policies/approximate_time.h>
 #include <image_transport/image_transport.h>
+#include <image_transport/subscriber_filter.h>
 #include <cv_bridge/cv_bridge.h>
 #include <sensor_msgs/image_encodings.h>
 #include <opencv2/core/core.hpp>
@@ -46,20 +47,20 @@ class RGBDNode : public Node
     RGBDNode (const ORB_SLAM2::System::eSensor sensor, ros::NodeHandle &node_handle, image_transport::ImageTransport &image_transport);
     ~RGBDNode ();
     void ImageCallback (const sensor_msgs::ImageConstPtr& msgRGB,const sensor_msgs::ImageConstPtr& msgD);
-    void CompressedImageRawDepthCallback (const sensor_msgs::CompressedImageConstPtr& msgRGB,const sensor_msgs::ImageConstPtr& msgD);
-    void CompressedImageCompressedDepthCallback (const sensor_msgs::CompressedImageConstPtr& msgRGB,const sensor_msgs::CompressedImageConstPtr& msgD);
+    void CompressedImageRawDepthCallback (const sensor_msgs::ImageConstPtr& msgRGB,const sensor_msgs::ImageConstPtr& msgD);
+    void CompressedImageCompressedDepthCallback (const sensor_msgs::ImageConstPtr& msgRGB, const sensor_msgs::ImageConstPtr& msgD);
 
   private:
     typedef message_filters::sync_policies::ApproximateTime<sensor_msgs::Image, sensor_msgs::Image> sync_pol;
-    typedef message_filters::sync_policies::ApproximateTime<sensor_msgs::CompressedImage, sensor_msgs::Image> compraw_sync_pol;
-    typedef message_filters::sync_policies::ApproximateTime<sensor_msgs::CompressedImage, sensor_msgs::CompressedImage> compcomp_sync_pol;
     message_filters::Subscriber<sensor_msgs::Image> *rgb_subscriber_;
-    message_filters::Subscriber<sensor_msgs::CompressedImage> *compressed_rgb_subscriber_;
-    message_filters::Subscriber<sensor_msgs::CompressedImage> *compressed_depth_subscriber_;
+    // message_filters::Subscriber<sensor_msgs::CompressedImage> *compressed_rgb_subscriber_;
+    // message_filters::Subscriber<sensor_msgs::CompressedImage> *compressed_depth_subscriber_;
+    image_transport::SubscriberFilter  *compressed_rgb_subscriber_;
+    image_transport::SubscriberFilter  *compressed_depth_subscriber_;
     message_filters::Subscriber<sensor_msgs::Image> *depth_subscriber_;
     message_filters::Synchronizer<sync_pol> *sync_;
-    message_filters::Synchronizer<compraw_sync_pol> *sync_CompressedImageRawDepth_;
-    message_filters::Synchronizer<compcomp_sync_pol> *sync_CompressedImageCompressedDepth_;
+    message_filters::Synchronizer<sync_pol> *sync_CompressedImageRawDepth_;
+    message_filters::Synchronizer<sync_pol> *sync_CompressedImageCompressedDepth_;
 };
 
 #endif //ORBSLAM2_ROS_RGBDODE_H_
