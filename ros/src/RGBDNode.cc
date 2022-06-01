@@ -90,10 +90,8 @@ void RGBDNode::ImageCallback (const sensor_msgs::ImageConstPtr& msgRGB, const se
 void RGBDNode::CompressedImageRawDepthCallback (const sensor_msgs::ImageConstPtr& msgRGB,const sensor_msgs::ImageConstPtr& msgD) {
   // Copy the ros image message to cv::Mat.
 
-  cv::Mat rgb_image; //Actually bgr
   cv_bridge::CvImagePtr cv_ptr;
   try {
-      // rgb_image = cv::imdecode(cv::Mat(msgRGB->data),cv::IMREAD_UNCHANGED);//convert compressed image data to cv::Mat
       cv_ptr = cv_bridge::toCvCopy(msgRGB);
 
   } catch (cv_bridge::Exception& e) {
@@ -108,7 +106,6 @@ void RGBDNode::CompressedImageRawDepthCallback (const sensor_msgs::ImageConstPtr
       ROS_ERROR("cv_bridge exception: %s", e.what());
       return;
   }
-  cv::cvtColor(rgb_image, rgb_image, cv::COLOR_BGR2RGB); //Convert to RGB
   current_frame_time_ = msgRGB->header.stamp;
 
   orb_slam_->TrackRGBD(cv_ptr->image,cv_ptrD->image,cv_ptrD->header.stamp.toSec());
@@ -118,11 +115,9 @@ void RGBDNode::CompressedImageRawDepthCallback (const sensor_msgs::ImageConstPtr
 void RGBDNode::CompressedImageCompressedDepthCallback (const sensor_msgs::ImageConstPtr& msgRGB,const sensor_msgs::ImageConstPtr& msgD) {
   // Copy the ros image message to cv::Mat.
   std::cout<<"OOOH WHEEE \n";
-  cv::Mat rgb_image;
   cv_bridge::CvImagePtr cv_ptr;
 
   try {
-      // rgb_image = cv::imdecode(cv::Mat(msgRGB->data),1);//convert compressed image data to cv::Mat
       cv_ptr = cv_bridge::toCvCopy(msgRGB);
 
   } catch (cv_bridge::Exception& e) {
