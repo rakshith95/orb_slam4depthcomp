@@ -114,7 +114,6 @@ void RGBDNode::CompressedImageRawDepthCallback (const sensor_msgs::ImageConstPtr
 
 void RGBDNode::CompressedImageCompressedDepthCallback (const sensor_msgs::ImageConstPtr& msgRGB,const sensor_msgs::ImageConstPtr& msgD) {
   // Copy the ros image message to cv::Mat.
-  std::cout<<"OOOH WHEEE \n";
   cv_bridge::CvImagePtr cv_ptr;
 
   try {
@@ -127,7 +126,7 @@ void RGBDNode::CompressedImageCompressedDepthCallback (const sensor_msgs::ImageC
  
    cv_bridge::CvImageConstPtr cv_ptrD;
   try {
-    cv_ptrD = cv_bridge::toCvShare(msgD);
+    cv_ptrD = cv_bridge::toCvCopy(msgD);
   } catch (cv_bridge::Exception& e) {
       ROS_ERROR("cv_bridge exception: %s", e.what());
       return;

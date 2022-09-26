@@ -20,7 +20,7 @@ Camera.height: 480
 Camera.bf: 9.052
 
 # Camera frames per second
-Camera.fps: 30.0
+Camera.fps: 4.0
 
 # Color order of the images (0: BGR, 1: RGB. It is ignored if images are grayscale)
 Camera.RGB: 1
